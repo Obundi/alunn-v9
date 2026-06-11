@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alunn — Admin (v9)</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-tabs { display:flex; gap:0; margin-bottom:28px; border-bottom:2px solid #eee; }
+    .admin-tab { flex:1; text-align:center; padding:12px 8px; font-size:0.9rem; font-weight:600;
+                 color:var(--mid); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px;
+                 transition:color 0.15s, border-color 0.15s; }
+    .admin-tab.active { color:var(--forest); border-bottom-color:var(--terracotta); }
+    .tab-panel { display:none; } .tab-panel.active { display:block; }
+    #match-result { display:none; }
+    .top-match-card { display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:12px;
+                      background:var(--cream); margin-bottom:10px; border:1px solid rgba(27,67,50,0.08); }
+    .top-match-rank { font-family:Georgia,serif; font-size:1.3rem; font-weight:700; color:var(--terracotta);
+                      width:28px; flex-shrink:0; text-align:center; }
+    .top-match-info { flex:1; min-width:0; }
+    .top-match-name { font-weight:700; color:var(--dark); font-size:0.97rem; }
+    .top-match-types { font-size:0.78rem; color:var(--mid); margin-top:3px; }
+    .top-match-stars { font-size:1.05rem; color:var(--terracotta); flex-shrink:0; letter-spacing:1px; }
+    .top-match-btn { font-size:0.78rem; color:var(--forest); font-weight:600; background:none;
+                     border:1.5px solid rgba(27,67,50,0.3); border-radius:99px; padding:5px 12px; cursor:pointer; flex-shrink:0; }
+    .top-match-btn:hover { background:var(--forest); color:#fff; }
+    .stars-big { font-family:Georgia,serif; font-size:2rem; color:var(--terracotta); letter-spacing:2px; }
+    .gate-banner { background:#fdecea; color:#c0392b; border-radius:12px; padding:14px 16px; font-weight:600; margin:16px 0; }
+    .lock-screen { text-align:center; padding:20px 0; }
+    #pin-input { width:160px; text-align:center; font-size:1.4rem; letter-spacing:0.3em; border:2px solid #ddd;
+                 border-radius:10px; padding:12px; font-family:inherit; margin:20px auto; display:block; outline:none; }
+    #pin-input:focus { border-color:var(--forest); }
+    .err-pin { color:#c0392b; font-size:0.9rem; margin-top:8px; display:none; }
+    .result-header { font-family:Georgia,serif; font-size:1rem; font-weight:700; color:var(--forest); margin:24px 0 14px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar-wrap"><div id="progress-bar" style="width:100%"></div></div>
+
+<div id="lock-screen" class="screen active">
+  <div class="card">
+    <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
+    <h2>Admin</h2>
+    <p class="screen-intro-text">Enter your access code to continue.</p>
+    <div class="lock-screen">
+      <input type="password" id="pin-input" placeholder="••••" maxlength="16">
+      <div class="err-pin" id="err-pin">Wrong code — try again.</div>
+      <button class="btn" style="max-width:200px;margin:0 auto;" onclick="checkPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div id="admin-screen" class="screen" style="display:none;">
+  <div class="card">
+    <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
+    <h2>Admin · v9</h2>
+    <div class="admin-tabs">
+      <div class="admin-tab active" onclick="switchTab('tab-top')">Top Matches</div>
+      <div class="admin-tab" onclick="switchTab('tab-match')">Match Report</div>
+      <div class="admin-tab" onclick="switchTab('tab-profile')">Profile Report</div>
+    </div>
+
+    <div id="tab-top" class="tab-panel active">
+      <p class="screen-intro-text">Enter a person's email to rank everyone else by compatibility (stars). Gated-out and below-threshold matches are hidden.</p>
+      <div class="field"><label for="top-email">Person — email</label>
+        <input type="email" id="top-email" placeholder="person@example.com"></div>
+      <label class="checkbox-option" style="margin:8px 0 14px;">
+        <input type="checkbox" id="show-gated"><span class="opt">Also show gated-out / below-threshold (for debugging)</span></label>
+      <div class="error-msg" id="err-top"></div>
+      <button class="btn" id="btn-top" onclick="findTopMatches()">Find top matches <span class="spinner" id="top-spinner" style="display:none;"></span></button>
+      <div id="top-result"></div>
+    </div>
+
+    <div id="tab-match" class="tab-panel">
+      <p class="screen-intro-text">Enter two emails for a detailed bidirectional compatibility report.</p>
+      <div class="field"><label for="email-a">Person A — email</label><input type="email" id="email-a" placeholder="person-a@example.com"></div>
+      <div class="field"><label for="email-b">Person B — email</label><input type="email" id="email-b" placeholder="person-b@example.com"></div>
+      <div class="error-msg" id="err-match"></div>
+      <button class="btn" id="btn-match" onclick="generateMatch()">Generate match report <span class="spinner" id="match-spinner" style="display:none;"></span></button>
+      <div id="match-result"></div>
+    </div>
+
+    <div id="tab-profile" class="tab-panel">
+      <p class="screen-intro-text">Regenerate someone's individual profile report.</p>
+      <div class="field"><label for="profile-email">Person — email</label><input type="email" id="profile-email" placeholder="person@example.com"></div>
+      <div class="error-msg" id="err-profile"></div>
+      <button class="btn" id="btn-profile" onclick="generateProfileReport()">Generate profile report <span class="spinner" id="profile-spinner" style="display:none;"></span></button>
+      <div id="profile-result"></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="engine-config.js"></script>
+<script src="text-library.js"></script>
+<script src="scorer.js"></script>
+<script src="admin-match.js"></script>
+<script src="admin-ui.js"></script>
+</body>
+</html>

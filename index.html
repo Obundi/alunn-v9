@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alunn — Meant to Align</title>
+  <meta name="description" content="A personality-first dating concept. Get matched on psychological compatibility before you ever swipe.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>A</text></svg>">
+</head>
+<body>
+  <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+  <div id="app"></div>
+
+  <!-- config + engine (single source of truth) -->
+  <script src="config.js"></script>
+  <script src="engine-config.js"></script>
+  <script src="questions-data.js"></script>
+  <script src="text-library.js"></script>
+  <script src="scorer.js"></script>
+  <!-- assessment flow -->
+  <script src="app.js"></script>
+</body>
+</html>
