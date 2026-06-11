@@ -1,0 +1,53 @@
+Field code	Form	Question	Answer options & meaning
+email	(all 3 forms)	Respondent email (links to their assessment)	free text
+—— FB_Assessment — assessment experience ——			
+fb_assessment_q1	fb_assessment	1. How long did the assessment feel?	Too short / Just right / A bit long / Too long
+fb_assessment_q2	fb_assessment	2. Did you think about giving up before finishing?	No / Once / A few times / I nearly did
+fb_assessment_q3	fb_assessment	3. If it felt long, which parts dragged?	Attachment · Communication · Drive/goals · Intimacy · Values · Lifestyle   [multi — joined by |]
+fb_assessment_q4	fb_assessment	4. The questions were clear and easy to understand.	1–5 (Strongly disagree → Strongly agree)
+fb_assessment_q5	fb_assessment	5. Did any questions feel too personal or uncomfortable?	Not at all / A little / Quite / Very
+fb_assessment_q6	fb_assessment	6. If so, which topics?	Intimacy/sex · Religion/values · Attachment/past · Politics · Money · Other   [multi — joined by |]
+fb_assessment_q7	fb_assessment	7. The questions felt relevant to finding a compatible partner.	1–5 (Strongly disagree → Strongly agree)
+fb_assessment_q8	fb_assessment	8. Compared to signing up for other dating apps, this felt…	Much worse / Worse / About the same / Better / Much better
+fb_assessment_q9	fb_assessment	9. How many up-front questions feels acceptable to you?	Under 10 / About 10 / About 20 / About 30 / As many as it takes
+fb_assessment_q10	fb_assessment	10. Overall the assessment made me feel…	Curious · Excited · Seen/understood · Neutral · Tired · Skeptical   [multi — joined by |]
+fb_assessment_q11	fb_assessment	11. Anything you'd change about the questions or the flow?	free text
+—— FB_Profile — profile accuracy ——			
+fb_profile_q1	fb_profile	1. Overall, my profile describes me accurately.	1–5 (Strongly disagree → Strongly agree)
+fb_profile_q2	fb_profile	2. Accuracy — Attachment style	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q3	fb_profile	3. Accuracy — Communication style	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q4	fb_profile	4. Accuracy — Relationship drive / goals	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q5	fb_profile	5. Accuracy — Intimacy needs	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q6	fb_profile	6. Accuracy — Values	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q7	fb_profile	7. Accuracy — Lifestyle	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q8	fb_profile	8. My main result (e.g. your attachment style / drive type) felt…	Spot on / Mostly right / Not really / Wrong
+fb_profile_q9	fb_profile	9. Did the profile tell you anything insightful about yourself?	Yes, genuinely / A little / Not really
+fb_profile_q10	fb_profile	10. Was anything clearly wrong?	No / Minor details / Yes, something important
+fb_profile_q11	fb_profile	11. If something was wrong, which part?	Attachment · Communication · Drive/goals · Intimacy · Values · Lifestyle   [multi — joined by |]
+fb_profile_q12	fb_profile	12. The report length / readability was…	Too short / Just right / A bit long / Too much text
+fb_profile_q13	fb_profile	13. I'd trust this to give me better matches than a normal app.	1–5 (Strongly disagree → Strongly agree)
+fb_profile_q14	fb_profile	14. Would you pay for a deeper personal report?	No / Maybe / Yes
+fb_profile_q15	fb_profile	15. If yes, what one-off price feels fair?	€4.99 / €9.99 / €14.99 / €19.99+
+fb_profile_q16	fb_profile	16. Anything you wish your profile had covered?	Sex/intimacy · Conflict style · Future goals · Family · Finances · Humour/fun · Other   [multi — joined by |]
+fb_profile_q17	fb_profile	17. Anything else about your profile?	free text
+—— FB_Match — couple match report ——			
+email	fb_match	1. Your email (to link with your assessment — kept private)	free text (stored in the "email" column)
+fb_match_q2	fb_match	2. Your relationship status right now	Together / Recently separated / Broken up
+fb_match_q3	fb_match	3. How long together (or how long were you)?	<6 mo / 6–12 mo / 1–3 yr / 3–7 yr / 7+ yr
+fb_match_q4	fb_match	4. My partner meets my needs well.	1–5 (Strongly disagree → Strongly agree)
+fb_match_q5	fb_match	5. Overall, I am satisfied with our relationship.	1–5 (Strongly disagree → Strongly agree)
+fb_match_q6	fb_match	6. Our relationship is better than most.	1–5 (Strongly disagree → Strongly agree)
+fb_match_q7	fb_match	7. I often wish I hadn't gotten into this relationship. (reverse)	1–5 (Strongly disagree → Strongly agree)   ⚠ REVERSE-SCORED (low = good)
+fb_match_q8	fb_match	8. Overall, the report described us accurately.	1–5 (Strongly disagree → Strongly agree)
+fb_match_q9	fb_match	9. Accuracy — Attachment section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q10	fb_match	10. Accuracy — Communication section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q11	fb_match	11. Accuracy — Polarity / attraction section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q12	fb_match	12. Accuracy — Drive / goals section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q13	fb_match	13. Accuracy — Intimacy section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q14	fb_match	14. Accuracy — Values section	Spot on / Mostly / Mixed / Off / Way off
+fb_match_q15	fb_match	15. The compatibility score was…	Higher than expected / About what we expected / Lower than expected
+fb_match_q16	fb_match	16. Did the report change how you see your dynamic?	Yes, new insight / A little / No
+fb_match_q17	fb_match	17. Report length / readability	Too little / Just right / A bit long / Too much text
+fb_match_q18	fb_match	18. It would be useful (e.g. as a conversation starter).	1–5 (Strongly disagree → Strongly agree)
+fb_match_q19	fb_match	19. Would you recommend Alunn to a friend?	No / Maybe / Yes, definitely
+fb_match_q20	fb_match	20. Anything to add to or remove from the report?	free text

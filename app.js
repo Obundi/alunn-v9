@@ -47,8 +47,9 @@ function renderScale(q) {
 function renderChoice(q) {
   const cur = state.answers[q.field] || '';
   const opts = q.options.map(o => {
+    const id = `opt-${q.field}-${o.v}`;
     const chk = cur === o.v ? 'checked' : '';
-    return `<label class="choice-option"><input type="radio" name="${q.field}" value="${o.v}" ${chk}><span class="opt">${escHtml(o.label)}</span></label>`;
+    return `<div class="choice-option"><input type="radio" id="${id}" name="${q.field}" value="${o.v}" ${chk}><label for="${id}">${escHtml(o.label)}</label></div>`;
   }).join('');
   return `
     <div class="question-block" data-qid="${q.field}">
@@ -60,75 +61,82 @@ function renderChoice(q) {
 /* ── hard-filter renderers ──────────────────────────────────────────────────*/
 function renderFilter(f) {
   const cur = state.answers[f.field];
-  const reqMark = f.mandate === 'M' ? '<span class="req">*</span>' : '<span class="org">(optional)</span>';
-  const newMark = f.isNew ? ' <span class="org">· new</span>' : '';
+  const reqMark = f.mandate === 'M' ? ' <span class="req">*</span>' : ' <span class="org">(optional)</span>';
   let control = '';
   if (f.type === 'select') {
     const opts = ['<option value="">Select…</option>']
       .concat(f.options.map(o => `<option value="${escHtml(o)}" ${cur === o ? 'selected' : ''}>${escHtml(o)}</option>`)).join('');
     control = `<select id="hf-${f.id}" data-field="${f.field}">${opts}</select>`;
   } else if (f.type === 'number') {
-    control = `<input type="number" id="hf-${f.id}" data-field="${f.field}" min="${f.min}" max="${f.max}" value="${escHtml(cur || '')}">`;
+    control = `<input type="number" id="hf-${f.id}" data-field="${f.field}" min="${f.min}" max="${f.max}" placeholder="${f.min}–${f.max}" value="${escHtml(cur || '')}">`;
   } else if (f.type === 'text') {
-    control = `<input type="text" id="hf-${f.id}" data-field="${f.field}" value="${escHtml(cur || '')}">`;
+    control = `<input type="text" id="hf-${f.id}" data-field="${f.field}" placeholder="e.g. Amsterdam" value="${escHtml(cur || '')}">`;
   } else if (f.type === 'multi') {
     const arr = Array.isArray(cur) ? cur : (cur ? String(cur).split('|') : []);
-    control = `<div class="choice-options" id="hf-${f.id}" data-field="${f.field}">` +
-      f.options.map(o => `<label class="checkbox-option"><input type="checkbox" value="${escHtml(o)}" ${arr.includes(o) ? 'checked' : ''}><span class="opt">${escHtml(o)}</span></label>`).join('') +
-      `</div>`;
+    control = `<div id="hf-${f.id}" data-field="${f.field}">` +
+      f.options.map((o, i) => {
+        const id = `chk-${f.id}-${i}`;
+        return `<div class="checkbox-option"><input type="checkbox" id="${id}" value="${escHtml(o)}" ${arr.includes(o) ? 'checked' : ''}><label for="${id}">${escHtml(o)}</label></div>`;
+      }).join('') + `</div>`;
   }
-  return `<div class="field" data-filter="${f.id}"><label>${escHtml(f.label)} ${reqMark}${newMark}</label>${control}</div>`;
+  return `<div class="field" data-filter="${f.id}"><label>${escHtml(f.label)}${reqMark}</label>${control}</div>`;
+}
+
+// Render the two age-range fields side by side as one premium row.
+function renderAgeRow() {
+  const min = HARD_FILTERS.find(f => f.id === 'AgeMin');
+  const max = HARD_FILTERS.find(f => f.id === 'AgeMax');
+  const box = (f, lbl) => `<div class="field" data-filter="${f.id}"><label>${lbl}</label>
+    <input type="number" id="hf-${f.id}" data-field="${f.field}" min="${f.min}" max="${f.max}" placeholder="${f.min}–${f.max}" value="${escHtml(state.answers[f.field] || '')}"></div>`;
+  return `<div class="field"><label class="field-group-label">Partner age range <span class="req">*</span></label>
+    <div class="field-row">${box(min, 'Minimum')}${box(max, 'Maximum')}</div></div>`;
 }
 
 /* ── build all screens ──────────────────────────────────────────────────────*/
 function init() {
   const app = document.getElementById('app');
 
-  // 0 — Intro
+  // 0 — Welcome + about you + Article-9 consent (§9), all on one page
   const intro = makeScreen('screen-intro');
   intro.innerHTML = `${logoHtml()}
     <h1>Meant to align</h1>
-    <p class="screen-intro-text">A personality-first dating concept. Answer 20 questions and get a psychological compatibility profile — before you ever swipe. This is a free beta: your honest reactions shape what Alunn becomes.</p>
-    <button class="btn" id="btn-start">Get started</button>`;
-  app.appendChild(intro); screens.push(intro);
-
-  // 1 — You + Article-9 consent (§9)
-  const you = makeScreen('screen-you');
-  you.innerHTML = `${logoHtml(true)}
-    <h2>About you</h2>
+    <p class="screen-intro-text">Alunn is a personality-first dating concept. Instead of judging on photos, it matches people on what actually keeps relationships together — how you attach, communicate, handle closeness and what you want from love.</p>
+    <p class="screen-intro-text">Here's how it works: answer <strong>20 quick questions</strong> (about 5 minutes), and you'll instantly get your own <strong>psychological compatibility profile</strong> — your attachment style, communication style, what draws you to a partner, and more. It's free, and this is an early beta, so your honest reactions genuinely shape what Alunn becomes.</p>
+    <div class="section-divider">Let's start with you</div>
     <div class="field"><label>First name <span class="org">(optional)</span></label>
       <input type="text" id="input-name" placeholder="Your first name" autocomplete="given-name" value="${escHtml(state.name)}"></div>
     <div class="field"><label>Email <span class="req">*</span></label>
-      <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email" value="${escHtml(state.email)}"></div>
+      <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email" value="${escHtml(state.email)}">
+      <p class="field-hint">We use this to save your profile and (with your permission) tell you about matches. No spam.</p></div>
     <div class="consent-wrap">
-      <label class="checkbox-option">
-        <input type="checkbox" id="input-consent" ${state.consent ? 'checked' : ''}>
-        <span class="opt"><strong>Explicit consent to process special-category data.</strong>
-        This assessment asks about your sexual orientation, religion, political leaning, intimacy and personality. I explicitly consent to Alunn collecting and processing these special categories of personal data (GDPR Article 9) for the sole purpose of generating my compatibility profile and matches. I can withdraw consent and request deletion at any time.</span>
-      </label>
+      <input type="checkbox" id="input-consent" ${state.consent ? 'checked' : ''}>
+      <label for="input-consent"><strong>I give my explicit consent.</strong>
+        This assessment asks about sensitive things — your sexual orientation, religion, political leaning, intimacy and personality. I explicitly consent to Alunn processing these special categories of personal data (GDPR Article&nbsp;9) solely to generate my compatibility profile and matches. I can withdraw consent and ask for my data to be deleted at any time.</label>
     </div>
     <div class="error-msg" id="err-you">Please enter a valid email and tick the consent box to continue.</div>
-    <button class="btn" id="btn-you-next">Continue</button>`;
-  app.appendChild(you); screens.push(you);
+    <button class="btn" id="btn-you-next">Start the assessment</button>`;
+  app.appendChild(intro); screens.push(intro);
 
-  // 2 — Setup (hard filters)
+  // 1 — Setup (hard filters)
   const setup = makeScreen('screen-setup');
-  const mand = HARD_FILTERS.filter(f => f.mandate === 'M');
+  const mand = HARD_FILTERS.filter(f => f.mandate === 'M' && f.id !== 'AgeMin' && f.id !== 'AgeMax');
   const opt = HARD_FILTERS.filter(f => f.mandate === 'O');
+  // Insert the side-by-side age row right after the "Age" field.
+  const mandHtml = mand.map(f => f.id === 'Age' ? renderFilter(f) + renderAgeRow() : renderFilter(f)).join('');
   setup.innerHTML = `${logoHtml(true)}
-    <h2>Your details & preferences</h2>
-    <p class="screen-intro-text">Required fields <span class="req">*</span> let us match you accurately. Optional ones refine your matches.</p>
+    <h2>Your details &amp; preferences</h2>
+    <p class="screen-intro-text">These help us match you with the right people. Fields marked <span class="req">*</span> are needed to match; the optional ones simply sharpen your matches. Nothing here is shared publicly.</p>
     <div class="section-divider">Required</div>
-    ${mand.map(renderFilter).join('')}
-    <div class="section-divider">Optional</div>
+    ${mandHtml}
+    <div class="section-divider">Optional — refine your matches</div>
     ${opt.map(renderFilter).join('')}
-    <div class="error-msg" id="err-setup">Please complete all required fields (and make sure max age is ≥ min age).</div>
-    <button class="btn" id="btn-setup-next">Continue</button>
+    <div class="error-msg" id="err-setup">Please complete all required fields (and make sure the maximum age is at least the minimum).</div>
+    <button class="btn" id="btn-setup-next">Continue to the questions</button>
     <button class="btn btn-secondary" id="btn-setup-back">Back</button>`;
   app.appendChild(setup); screens.push(setup);
 
-  // 3..N — question groups
-  QUESTION_GROUPS.forEach((g, i) => screens.push(buildQScreen(app, g, 3 + i)));
+  // 2..N — question groups
+  QUESTION_GROUPS.forEach((g, i) => screens.push(buildQScreen(app, g, 2 + i)));
 
   // last-1 — report
   const report = makeScreen('screen-report');
@@ -147,11 +155,13 @@ function init() {
 
 function buildQScreen(app, group, stepNum) {
   const screen = makeScreen('screen-q-' + stepNum);
+  const part = stepNum - 1; // question groups start at screen index 2 → Part 1
+  const total = QUESTION_GROUPS.length;
   const qsHtml = group.questions.map(q => q.type === 'scale' ? renderScale(q) : renderChoice(q)).join('');
   screen.innerHTML = `${logoHtml(true)}
-    <p class="step-counter">${escHtml(group.title)}</p>
+    <p class="step-counter">Part ${part} of ${total}</p>
     <h2>${escHtml(group.title)}</h2>
-    <p class="screen-intro-text">${escHtml(group.intro)}</p>
+    <p class="screen-intro-text">${group.intro}</p>
     ${qsHtml}
     <div class="error-msg" id="err-q-${stepNum}">Please answer every question to continue.</div>`;
   app.appendChild(screen);
@@ -163,24 +173,27 @@ function buildQScreen(app, group, stepNum) {
 }
 
 function wireEvents() {
-  document.getElementById('btn-start').addEventListener('click', () => showScreen(1));
-
-  // You → consent gate
+  // Welcome page → consent gate
   document.getElementById('btn-you-next').addEventListener('click', () => {
     const email = document.getElementById('input-email').value.trim();
     const consent = document.getElementById('input-consent').checked;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!emailOk || !consent) { document.getElementById('err-you').classList.add('visible'); return; }
+    if (!emailOk || !consent) {
+      document.getElementById('err-you').classList.add('visible');
+      document.getElementById(emailOk ? 'input-consent' : 'input-email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    document.getElementById('err-you').classList.remove('visible');
     state.name = document.getElementById('input-name').value.trim();
     state.email = email;
     state.consent = true;
     state.consentAt = new Date().toISOString();
     saveProgress();
-    showScreen(2);
+    showScreen(1);
   });
 
   // Setup → mandatory gate
-  document.getElementById('btn-setup-back').addEventListener('click', () => showScreen(1));
+  document.getElementById('btn-setup-back').addEventListener('click', () => showScreen(0));
   document.getElementById('btn-setup-next').addEventListener('click', collectAndValidateSetup);
 
   // Question screens: nav buttons appended dynamically
@@ -239,7 +252,7 @@ function collectAndValidateSetup() {
     return;
   }
   document.getElementById('err-setup').classList.remove('visible');
-  showScreen(3);
+  showScreen(2);
 }
 
 /* ── submit + score ─────────────────────────────────────────────────────────*/

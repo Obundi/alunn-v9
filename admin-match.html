@@ -64,8 +64,8 @@
       <p class="screen-intro-text">Enter a person's email to rank everyone else by compatibility (stars). Gated-out and below-threshold matches are hidden.</p>
       <div class="field"><label for="top-email">Person — email</label>
         <input type="email" id="top-email" placeholder="person@example.com"></div>
-      <label class="checkbox-option" style="margin:8px 0 14px;">
-        <input type="checkbox" id="show-gated"><span class="opt">Also show gated-out / below-threshold (for debugging)</span></label>
+      <div class="checkbox-option" style="margin:8px 0 14px;">
+        <input type="checkbox" id="show-gated"><label for="show-gated">Also show gated-out / below-threshold (for debugging)</label></div>
       <div class="error-msg" id="err-top"></div>
       <button class="btn" id="btn-top" onclick="findTopMatches()">Find top matches <span class="spinner" id="top-spinner" style="display:none;"></span></button>
       <div id="top-result"></div>

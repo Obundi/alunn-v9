@@ -522,9 +522,9 @@ function fbRender(){
       ctrl=`<div class="scale-row">`+[1,2,3,4,5].map(v=>`<label class="scale-option"><input type="radio" name="${id}" value="${v}"><span class="scale-btn">${v}</span></label>`).join('')+`</div>`+
         `<div class="scale-labels"><span class="scale-label">Strongly disagree</span><span class="scale-label">Strongly agree</span></div>`;
     } else if(q.t==='single'){
-      ctrl=`<div class="choice-options">`+(q.o||[]).map(o=>`<label class="choice-option"><input type="radio" name="${id}" value="${fbEsc(o)}"><span class="opt">${fbEsc(o)}</span></label>`).join('')+`</div>`;
+      ctrl=`<div class="choice-options">`+(q.o||[]).map(function(o,i){var oid=id+'-o'+i;return `<div class="choice-option"><input type="radio" id="${oid}" name="${id}" value="${fbEsc(o)}"><label for="${oid}">${fbEsc(o)}</label></div>`;}).join('')+`</div>`;
     } else if(q.t==='multi'){
-      ctrl=`<div class="choice-options" data-multi="${id}">`+(q.o||[]).map(o=>`<label class="checkbox-option"><input type="checkbox" value="${fbEsc(o)}"><span class="opt">${fbEsc(o)}</span></label>`).join('')+`</div>`;
+      ctrl=`<div data-multi="${id}">`+(q.o||[]).map(function(o,i){var oid=id+'-m'+i;return `<div class="checkbox-option"><input type="checkbox" id="${oid}" value="${fbEsc(o)}"><label for="${oid}">${fbEsc(o)}</label></div>`;}).join('')+`</div>`;
     }
     parts.push(`<div class="question-block" data-qid="${id}"><p class="question-text">${q.n}. ${fbEsc(q.q)}</p>${ctrl}</div>`);
   });

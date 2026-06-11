@@ -141,21 +141,52 @@ p:last-of-type { margin-bottom: 0; }
 }
 .field input[type="text"],
 .field input[type="email"],
+.field input[type="number"],
+.field select,
 .field textarea {
   width: 100%;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  padding: 12px 14px;
+  border: 1.5px solid #e3ddd4;
+  border-radius: 10px;
+  padding: 13px 15px;
   font-size: 1rem;
   font-family: inherit;
   color: var(--dark);
-  background: var(--cream);
-  transition: border-color 0.2s;
+  background: #fffdfa;
+  transition: border-color 0.18s, box-shadow 0.18s;
   outline: none;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .field input:focus,
-.field textarea:focus { border-color: var(--forest); }
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(27,67,50,0.10);
+}
+.field input::placeholder { color: #b8b2a8; }
 .field textarea { min-height: 90px; resize: vertical; }
+
+/* Custom dropdown arrow for selects */
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231B4332' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+/* Number fields read as compact, premium pills; hide spinner clutter */
+.field input[type="number"] { max-width: 160px; }
+.field input[type="number"]::-webkit-outer-spin-button,
+.field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.field input[type="number"] { -moz-appearance: textfield; }
+/* Side-by-side rows (e.g. age min/max) */
+.field-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.field-row .field { flex: 1; min-width: 130px; margin-bottom: 0; }
+.field-group-label {
+  display: block; font-size: 0.88rem; font-weight: 600; color: var(--forest);
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+}
 
 /* ── Consent ── */
 .consent-wrap {
@@ -332,24 +363,19 @@ p:last-of-type { margin-bottom: 0; }
 .opt { font-weight: 400; color: #aaa; font-size: 0.88em; }
 .req { font-weight: 600; color: var(--terracotta); }
 .screen-intro-text { color: var(--mid); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.55; }
-.section-divider { border: none; border-top: 1px solid #e8e4de; margin: 28px 0; }
+.screen-intro-text strong { color: var(--forest); }
+.field-hint { font-size: 0.8rem; color: var(--mid); margin-top: 6px; line-height: 1.4; }
 
-/* ── Select ── */
-.field select {
-  width: 100%;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 1rem;
-  font-family: inherit;
-  color: var(--dark);
-  background: var(--cream);
-  appearance: none;
-  outline: none;
-  transition: border-color 0.2s;
-  cursor: pointer;
+/* Labelled divider: a centred small-caps title with a hairline either side */
+.section-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 30px 0 22px;
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--forest);
 }
-.field select:focus { border-color: var(--forest); }
+.section-divider::before, .section-divider::after {
+  content: ""; flex: 1; height: 1px; background: #e3ddd4;
+}
 
 /* ── Profile chart ── */
 .report-chart-card {

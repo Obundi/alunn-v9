@@ -1,0 +1,52 @@
+Field code	Dimension	Question / field	Answer options & meaning
+timestamp	—	When the response was submitted	auto
+type	—	Record type	questionnaire / fb_assessment / fb_profile / fb_match
+name	—	First name (optional)	free text
+email	—	Email (links their data)	free text
+consent	—	Article-9 explicit consent given	yes / no
+consentAt	—	Consent timestamp	auto
+ATT_C01	ATT	I feel comfortable depending on others in close relationships.	1=Strongly disagree … 5=Strongly agree  (Secure indicator)
+COM_C01	COM	When there is a problem I prefer to address it directly and immediately.	1–5 disagree→agree  (Direct style)
+POL_C06	POL	Best long-term relationship would be with someone who…	A=Reinforces who I am (100) · B=Balances me (50) · C=Challenges me / different (0)
+ATT_C05	ATT	I often worry about being abandoned by someone I love.	1–5 disagree→agree  (Anxious)
+DRV_C01	DRV	The relationship scenario that excites you most is…	A=Building a life · B=Deep friendship · C=Growth/adventure · D=Being truly known  (A=Builder,B=Companion,C=Explorer,D=Nurturer)
+POL_C01	POL	Past relationships: most attracted to someone who was…	A=Very similar (100) · B=A mix (50) · C=Quite different (0)
+ATT_C06	ATT	When someone gets too close, I feel the urge to pull back.	1–5 disagree→agree  (Avoidant)
+COM_C02	COM	I need to talk through my feelings out loud to process them.	1–5 disagree→agree  (Expressive)
+POL_C04	POL	On ambition/drive, most attracted to someone who…	A=Matches my pace (100) · B=Somewhat more/less (50) · C=Very different (0)
+INT_T201	INT	Importance of physical chemistry & sexual compatibility.	1=Not important … 5=Essential
+ATT_C02	ATT	I worry people I care about don't value me as much as I value them.	1–5 disagree→agree  (Anxious)
+POL_C03	POL	On social energy/lifestyle, most attracted to someone who is…	A=About the same (100) · B=Somewhat different (50) · C=Very different (0)
+COM_C04	COM	I prioritise keeping the peace over raising an issue.	1–5 disagree→agree  (Harmonious)
+ATT_C10	ATT	I generally trust that my partners have good intentions toward me.	1–5 disagree→agree  (Secure)
+DRV_C03	DRV	What would make you most fulfilled long-term…	A=Achieving things together · B=Simply being together · C=Growing together · D=Understanding each other deeply  (A=Builder,B=Companion,C=Explorer,D=Nurturer)
+COM_C03	COM	I need to think a problem through alone before discussing it.	1–5 disagree→agree  (Analytical)
+INT_T202	INT	I need regular physical affection to feel connected.	1–5 disagree→agree
+BIG_C03	BIG	I feel energised by socialising with groups of people.	1=Never … 5=Always  (Extraversion → polarity social axis)
+LIF_T103	LIF	How career-ambitious are you yourself?	1=Not at all … 5=Very ambitious  (also polarity ambition axis)
+VAL_C01	VAL	My overall outlook & core values lean…	1=Traditional … 5=Progressive
+—— Hard filters ——			
+Gender	M=mandatory	Gender identity	Man / Woman / Non-binary / Other
+Orientation	M=mandatory	Sexual orientation	Straight / Gay / Lesbian / Bisexual / Pansexual / Other
+LookingFor	M=mandatory	Looking to match with	Men / Women / Everyone
+Intent	M=mandatory	Relationship intent (NEW)	Long-term / Open / Casual / Figuring out
+RelType	M=mandatory	Relationship type	Monogamous / ENM / Open to both
+WantKids	M=mandatory	Wants children	Yes / Open / Unsure / No
+Age	M=mandatory	Own age	number
+AgeMin	M=mandatory	Partner age — minimum	number
+AgeMax	M=mandatory	Partner age — maximum	number
+City	M=mandatory	City	free text
+HasKids	M=mandatory	Has children now	No / Yes (lives with) / Yes (not living with)
+OpenToKids	M=mandatory	Open to partner with children	Yes / Depends / Prefer not / Dealbreaker
+Religion	M=mandatory	Religion	None / Christian / Muslim / Jewish / Hindu / Buddhist / Spiritual / Other
+RelImportance	M=mandatory	Importance of shared religion	Not / Somewhat / Very / Must share
+Height	optional	Height cm (NEW)	number
+Education	optional	Education (NEW)	High school / Vocational / Bachelor's / Master's / PhD
+Smoking	optional	Smoking	Non-smoker / Smoker / Occasionally / No preference
+Drinking	optional	Drinking	Non-drinker / Social / Regularly / No preference
+Cannabis	optional	Cannabis use (NEW)	Never / Socially / Regularly / No preference
+OtherDrugs	optional	Other drugs (NEW)	Never / Sometimes / No preference
+Politics	optional	Political leaning (NEW)	Left / Centre / Right / Apolitical / Prefer not to say
+Pets	optional	Pets (NEW)	Have / Want / Allergic / None
+Finances	optional	Financial attitude	Saver / Balanced / Spender / Prefer not to say
+Languages	optional	Languages spoken (NEW)	multi-select, joined by |

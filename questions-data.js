@@ -13,7 +13,7 @@ const SCALE_5 = ['1', '2', '3', '4', '5'];
 const QUESTION_GROUPS = [
   {
     title: 'Attachment',
-    intro: 'How you experience closeness and trust.',
+    intro: '<strong>Attachment</strong> is how you experience closeness, trust and security with a partner — the single strongest predictor of how a relationship feels day to day. There are no right answers; just go with your gut.',
     questions: [
       { n: 1,  field: 'ATT_C01', type: 'scale', text: 'I feel comfortable depending on others in close relationships.', anchors: ['Strongly disagree', 'Strongly agree'] },
       { n: 4,  field: 'ATT_C05', type: 'scale', text: 'I often worry about being abandoned by someone I love.', anchors: ['Strongly disagree', 'Strongly agree'] },
@@ -24,7 +24,7 @@ const QUESTION_GROUPS = [
   },
   {
     title: 'Communication',
-    intro: 'How you handle issues and express yourself.',
+    intro: '<strong>Communication</strong> is how you raise issues, process feelings and handle conflict. Partners rarely fail because they disagree — it\'s usually about <em>how</em> they talk when they do.',
     questions: [
       { n: 2,  field: 'COM_C01', type: 'scale', text: 'When there is a problem I prefer to address it directly and immediately.', anchors: ['Strongly disagree', 'Strongly agree'] },
       { n: 8,  field: 'COM_C02', type: 'scale', text: 'I need to talk through my feelings out loud in order to properly process them.', anchors: ['Strongly disagree', 'Strongly agree'] },
@@ -34,7 +34,7 @@ const QUESTION_GROUPS = [
   },
   {
     title: 'What attracts you',
-    intro: 'The kind of partner that draws you in.',
+    intro: '<strong>Attraction polarity</strong> is whether you\'re drawn to someone <em>similar</em> to you or someone who <em>complements and contrasts</em> you. Both can work — knowing your pull helps us match you well. Pick the option that feels most true.',
     questions: [
       { n: 3,  field: 'POL_C06', type: 'choice', text: 'Overall, the best long-term relationship for me would be with someone who:',
         options: [{ v: 'A', label: 'Reinforces who I already am' }, { v: 'B', label: 'Balances me' }, { v: 'C', label: 'Challenges me by being genuinely different' }] },
@@ -48,7 +48,7 @@ const QUESTION_GROUPS = [
   },
   {
     title: 'Relationship drive',
-    intro: 'What a relationship is fundamentally for, to you.',
+    intro: '<strong>Relationship drive</strong> is what a relationship is fundamentally <em>for</em>, to you — building a life, easy companionship, shared growth, or deep understanding. Partners thrive when their core drives line up.',
     questions: [
       { n: 5,  field: 'DRV_C01', type: 'choice', text: 'The relationship scenario that excites you most is:',
         options: [{ v: 'A', label: 'Building a life together' }, { v: 'B', label: 'Deep friendship' }, { v: 'C', label: 'Growth and adventure' }, { v: 'D', label: 'Being truly known' }] },
@@ -58,7 +58,7 @@ const QUESTION_GROUPS = [
   },
   {
     title: 'Intimacy & affection',
-    intro: 'The role of physical closeness for you.',
+    intro: '<strong>Intimacy</strong> is how central physical chemistry and affection are to how you bond. There\'s no better or worse here — just how strong this need runs for you, so we can match you with someone on a similar wavelength.',
     questions: [
       { n: 10, field: 'INT_T201', type: 'scale', text: 'How important is physical chemistry and sexual compatibility to you in a long-term partner?', anchors: ['Not important', 'Essential'] },
       { n: 17, field: 'INT_T202', type: 'scale', text: 'I need regular physical affection (touch, closeness) to feel connected in a relationship.', anchors: ['Strongly disagree', 'Strongly agree'] }
@@ -66,7 +66,7 @@ const QUESTION_GROUPS = [
   },
   {
     title: 'You & your outlook',
-    intro: 'A few things about you, used to calibrate attraction and values.',
+    intro: 'Last few. These describe <strong>you</strong> — your social energy, ambition and core values. We compare them with what you find attractive (and with potential partners) to calibrate your matches.',
     questions: [
       { n: 18, field: 'BIG_C03', type: 'scale', text: 'I feel genuinely energised by socialising and spending time with groups of people.', anchors: ['Never', 'Always'] },
       { n: 19, field: 'LIF_T103', type: 'scale', text: 'How career-ambitious are you yourself?', anchors: ['Not at all', 'Very ambitious'] },
