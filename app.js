@@ -98,10 +98,9 @@ function init() {
 
   // 0 — Welcome + about you + Article-9 consent (§9), all on one page
   const intro = makeScreen('screen-intro');
-  intro.innerHTML = `${logoHtml()}
+  intro.innerHTML = `${logoHtml(true)}
     <h1>Meant to align</h1>
-    <p class="screen-intro-text">Alunn is a personality-first dating concept. Instead of judging on photos, it matches people on what actually keeps relationships together — how you attach, communicate, handle closeness and what you want from love.</p>
-    <p class="screen-intro-text">Here's how it works: answer <strong>20 quick questions</strong> (about 5 minutes), and you'll instantly get your own <strong>psychological compatibility profile</strong> — your attachment style, communication style, what draws you to a partner, and more. It's free, and this is an early beta, so your honest reactions genuinely shape what Alunn becomes.</p>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Alunn is a personality-first dating concept — instead of judging on photos, it matches people on what actually keeps relationships together: how you attach, communicate, handle closeness and what you want from love.<br><br>Answer <strong>20 quick questions</strong> (about 5 minutes) and you'll instantly get your own <strong>psychological compatibility profile</strong>. It's free, and this is an early beta, so your honest reactions genuinely shape what Alunn becomes.</div></div>
     <div class="section-divider">Let's start with you</div>
     <div class="field"><label>First name <span class="org">(optional)</span></label>
       <input type="text" id="input-name" placeholder="Your first name" autocomplete="given-name" value="${escHtml(state.name)}"></div>
@@ -125,7 +124,7 @@ function init() {
   const mandHtml = mand.map(f => f.id === 'Age' ? renderFilter(f) + renderAgeRow() : renderFilter(f)).join('');
   setup.innerHTML = `${logoHtml(true)}
     <h2>Your details &amp; preferences</h2>
-    <p class="screen-intro-text">These help us match you with the right people. Fields marked <span class="req">*</span> are needed to match; the optional ones simply sharpen your matches. Nothing here is shared publicly.</p>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>These help us match you with the right people. Fields marked <span class="req">*</span> are needed to match; the optional ones simply sharpen your matches. Nothing here is shared publicly.</div></div>
     <div class="section-divider">Required</div>
     ${mandHtml}
     <div class="section-divider">Optional — refine your matches</div>
@@ -306,53 +305,14 @@ function ensureSubmitted() {
 function renderProfile(report) {
   const el = document.getElementById('report-content');
   el.style.display = 'block';
-
-  const bars = report.dimensions.filter(d => d.score != null).map(d => `
-    <div class="dim-bar-row">
-      <div class="dim-bar-meta">
-        <span class="dim-bar-label">${escHtml(d.name)}</span>
-        ${d.label && d.label !== 'gen' ? `<span class="dim-bar-sub">${escHtml(d.label)}</span>` : ''}
-      </div>
-      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:0%;background:#C1440E" data-pct="${d.score}"></div></div>
-      <span class="dim-bar-pct">${d.score}</span>
-    </div>`).join('');
-
-  const sections = report.dimensions.map(d => `
-    <div class="report-section">
-      <div class="report-section-label">${escHtml(d.name)}</div>
-      ${d.label && d.label !== 'gen' ? `<div class="report-section-type">${escHtml(d.label)}</div>` : ''}
-      <p class="report-body">${escHtml(d.about)}</p>
-      ${d.tip ? `<div class="match-tip-box"><span class="match-tip-label">Growth tip</span><span class="match-tip-text">${escHtml(d.tip)}</span></div>` : ''}
-    </div>`).join('');
-
-  const who = report.name && report.name !== 'You' ? `${escHtml(report.name)}'s profile` : 'Your profile';
-  el.innerHTML = `
-    ${logoHtml(true)}
-    <h2>Your profile</h2>
-    <p class="screen-intro-text">Here's what your answers say about how you connect. A starting point for reflection — not a verdict.</p>
-    <div class="report-chart-card">
-      <p class="report-name">${who}</p>
-      <p class="chart-title">Your dimensions</p>
-      <div class="dim-bars">${bars}</div>
-      <p class="chart-legend">Each bar shows where you sit on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it simply describes you.</p>
-    </div>
-    <div class="dim-callout" style="margin-top:16px;"><span class="dim-callout-icon">i</span><div>This beta uses Alunn's <strong>starter question set</strong>. The full version adds further question sets that deepen every dimension even more.</div></div>
-    <div class="report-card">${sections}</div>
-    <p class="report-disclaimer">Alunn profiles are for personal guidance only — not a clinical assessment, and they don't predict any specific outcome. Use this as a starting point for reflection, not a verdict.</p>
-    <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;">
-      <button class="btn btn-secondary btn-pdf" style="flex:1;" onclick="window.print()">Save as PDF</button>
-    </div>
+  // Identical profile body for everyone (shared with the admin tool), plus the
+  // assessment-only nudge to the accuracy feedback form.
+  el.innerHTML = profileReportHTML(report) + `
     <div class="feedback-nudge">
       <p>One last thing — does this profile actually feel like you? Tell us where it's right and where it's off:</p>
       <a class="btn" href="fb-profile.html?email=${encodeURIComponent(state.email)}">Rate my profile's accuracy →</a>
     </div>`;
-
-  requestAnimationFrame(() => setTimeout(() => {
-    el.querySelectorAll('.dim-bar-fill').forEach(bar => {
-      bar.style.transition = 'width 0.9s cubic-bezier(0.4,0,0.2,1)';
-      bar.style.width = bar.dataset.pct + '%';
-    });
-  }, 100));
+  animateProfileBars(el);
 }
 
 document.addEventListener('DOMContentLoaded', init);

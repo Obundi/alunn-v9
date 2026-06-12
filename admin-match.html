@@ -32,6 +32,22 @@
     #pin-input:focus { border-color:var(--forest); }
     .err-pin { color:#c0392b; font-size:0.9rem; margin-top:8px; display:none; }
     .result-header { font-family:Georgia,serif; font-size:1rem; font-weight:700; color:var(--forest); margin:24px 0 14px; }
+
+    /* When saving a generated report as PDF, print only the report — not the
+       admin chrome — so it's identical to the user-facing profile PDF. */
+    @media print {
+      #lock-screen { display:none !important; }
+      #admin-screen > .card > .logo-wrap,
+      #admin-screen > .card > h2,
+      .admin-tabs { display:none !important; }
+      .tab-panel:not(.active) { display:none !important; }
+      .tab-panel > .field,
+      .tab-panel > .btn,
+      .tab-panel > .checkbox-option,
+      .tab-panel > .result-header,
+      .tab-panel > .dim-callout,
+      .tab-panel > .error-msg { display:none !important; }
+    }
   </style>
 </head>
 <body>
@@ -61,7 +77,7 @@
     </div>
 
     <div id="tab-top" class="tab-panel active">
-      <p class="screen-intro-text">Enter a person's email to rank everyone else by compatibility (stars). Gated-out and below-threshold matches are hidden.</p>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Enter a person's email to rank everyone else by compatibility (stars). Gated-out and below-threshold matches are hidden.</div></div>
       <div class="field"><label for="top-email">Person — email</label>
         <input type="email" id="top-email" placeholder="person@example.com"></div>
       <div class="checkbox-option" style="margin:8px 0 14px;">
@@ -72,7 +88,7 @@
     </div>
 
     <div id="tab-match" class="tab-panel">
-      <p class="screen-intro-text">Enter two emails for a detailed bidirectional compatibility report.</p>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Enter two emails for a detailed bidirectional compatibility report.</div></div>
       <div class="field"><label for="email-a">Person A — email</label><input type="email" id="email-a" placeholder="person-a@example.com"></div>
       <div class="field"><label for="email-b">Person B — email</label><input type="email" id="email-b" placeholder="person-b@example.com"></div>
       <div class="error-msg" id="err-match"></div>
@@ -81,7 +97,7 @@
     </div>
 
     <div id="tab-profile" class="tab-panel">
-      <p class="screen-intro-text">Regenerate someone's individual profile report.</p>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Regenerate someone's individual profile report — the exact report they receive, ready to save as a PDF and send.</div></div>
       <div class="field"><label for="profile-email">Person — email</label><input type="email" id="profile-email" placeholder="person@example.com"></div>
       <div class="error-msg" id="err-profile"></div>
       <button class="btn" id="btn-profile" onclick="generateProfileReport()">Generate profile report <span class="spinner" id="profile-spinner" style="display:none;"></span></button>

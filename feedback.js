@@ -539,7 +539,7 @@ function fbFormInner(form, presetEmail, embedded){
   if(!embedded){
     parts.push(`<div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>`);
     parts.push(`<h2>${fbEsc(form.title)}</h2>`);
-    parts.push(`<p class="screen-intro-text">${fbEsc(form.intro)}</p>`);
+    parts.push(`<div class="dim-callout"><span class="dim-callout-icon">i</span><div>${fbEsc(form.intro)}</div></div>`);
   }
 
   // Email field (linking key). The match form has it as question 1; others prepend it.

@@ -150,7 +150,7 @@ function renderMatchReport(m) {
   const bars = m.dims.filter(d => d.match != null).map(d => `
     <div class="dim-bar-row">
       <div class="dim-bar-meta"><span class="dim-bar-label">${escA(d.name)}</span><span class="dim-bar-sub">${d.band}</span></div>
-      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${d.match}%;background:#C1440E"></div></div>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:0%;background:#C1440E" data-pct="${d.match}"></div></div>
       <span class="dim-bar-pct">${d.match}</span>
     </div>`).join('');
 
@@ -173,6 +173,7 @@ function renderMatchReport(m) {
     <div style="display:flex;gap:10px;margin-top:24px;">
       <button class="btn btn-secondary btn-pdf" style="flex:1;" onclick="window.print()">Save as PDF</button>
     </div>`;
+  animateProfileBars(el);
 }
 
 /* ── Tab 3: profile report ──────────────────────────────────────────────────*/
@@ -195,23 +196,9 @@ async function generateProfileReport() {
 
 function renderAdminProfile(report) {
   const el = document.getElementById('profile-result');
-  const bars = report.dimensions.filter(d => d.score != null).map(d => `
-    <div class="dim-bar-row">
-      <div class="dim-bar-meta"><span class="dim-bar-label">${escA(d.name)}</span>${d.label && d.label !== 'gen' ? `<span class="dim-bar-sub">${escA(d.label)}</span>` : ''}</div>
-      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${d.score}%;background:#C1440E"></div></div>
-      <span class="dim-bar-pct">${d.score}</span>
-    </div>`).join('');
-  const sections = report.dimensions.map(d => `
-    <div class="report-section">
-      <div class="report-section-label">${escA(d.name)}${d.label && d.label !== 'gen' ? ` <span class="org">· ${escA(d.label)}</span>` : ''}</div>
-      <p class="report-body">${escA(d.about)}</p>
-      ${d.tip ? `<div class="match-tip-box"><span class="match-tip-label">Growth tip</span><span class="match-tip-text">${escA(d.tip)}</span></div>` : ''}
-    </div>`).join('');
-  el.innerHTML = `
-    <div class="report-chart-card"><p class="report-name">${escA(report.name)}'s profile</p>
-      <p class="chart-title">Dimensions <span class="org">· clarity ${report.clarity}%</span></p>
-      <div class="dim-bars">${bars}</div></div>
-    <div class="report-card">${sections}</div>`;
+  // EXACT same profile as the user gets — one shared renderer (scorer.js).
+  el.innerHTML = profileReportHTML(report);
+  animateProfileBars(el);
 }
 
 // Allow Enter on the PIN field.

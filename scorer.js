@@ -317,6 +317,63 @@ function buildProfileReport(scores, displayName) {
   return { name: displayName || 'You', clarity: scores.clarity, dimensions: dims };
 }
 
+/* ── Shared profile view ────────────────────────────────────────────────────
+   ONE renderer for the individual profile, used by BOTH the assessment flow
+   (app.js) and the admin tool (admin-ui.js) so they are byte-for-byte identical.
+   Returns the inner HTML; call animateProfileBars(container) after injecting.
+   ─────────────────────────────────────────────────────────────────────────── */
+function profileEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function profileReportHTML(report) {
+  const e = profileEsc;
+  const bars = report.dimensions.filter(d => d.score != null).map(d => `
+    <div class="dim-bar-row">
+      <div class="dim-bar-meta">
+        <span class="dim-bar-label">${e(d.name)}</span>
+        ${d.label && d.label !== 'gen' ? `<span class="dim-bar-sub">${e(d.label)}</span>` : ''}
+      </div>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:0%;background:#C1440E" data-pct="${d.score}"></div></div>
+      <span class="dim-bar-pct">${d.score}</span>
+    </div>`).join('');
+
+  const sections = report.dimensions.map(d => `
+    <div class="report-section">
+      <div class="report-section-label">${e(d.name)}</div>
+      ${d.label && d.label !== 'gen' ? `<div class="report-section-type">${e(d.label)}</div>` : ''}
+      <p class="report-body">${e(d.about)}</p>
+      ${d.tip ? `<div class="match-tip-box"><span class="match-tip-label">Growth tip</span><span class="match-tip-text">${e(d.tip)}</span></div>` : ''}
+    </div>`).join('');
+
+  const who = report.name && report.name !== 'You' ? `${e(report.name)}'s profile` : 'Your profile';
+  return `
+    <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
+    <h2>Your profile</h2>
+    <p class="screen-intro-text">Here's what your answers say about how you connect. A starting point for reflection — not a verdict.</p>
+    <div class="report-chart-card">
+      <p class="report-name">${who}</p>
+      <p class="chart-title">Your dimensions</p>
+      <div class="dim-bars">${bars}</div>
+      <p class="chart-legend">Each bar shows where you sit on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it simply describes you.</p>
+    </div>
+    <div class="dim-callout" style="margin-top:16px;"><span class="dim-callout-icon">i</span><div>This beta uses Alunn's <strong>starter question set</strong>. The full version adds further question sets that deepen every dimension even more.</div></div>
+    <div class="report-card">${sections}</div>
+    <p class="report-disclaimer">Alunn profiles are for personal guidance only — not a clinical assessment, and they don't predict any specific outcome. Use this as a starting point for reflection, not a verdict.</p>
+    <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-pdf" style="flex:1;" onclick="window.print()">Save as PDF</button>
+    </div>`;
+}
+
+function animateProfileBars(container) {
+  requestAnimationFrame(() => setTimeout(() => {
+    container.querySelectorAll('.dim-bar-fill').forEach(bar => {
+      bar.style.transition = 'width 0.9s cubic-bezier(0.4,0,0.2,1)';
+      bar.style.width = bar.dataset.pct + '%';
+    });
+  }, 100));
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, lifestyleText, lifestyleLabel, valuesText, scoredFieldList, avg, subAvg20 };
+  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, lifestyleText, lifestyleLabel, valuesText, profileReportHTML, animateProfileBars, scoredFieldList, avg, subAvg20 };
 }
