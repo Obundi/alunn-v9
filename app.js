@@ -307,11 +307,6 @@ function renderProfile(report) {
   const el = document.getElementById('report-content');
   el.style.display = 'block';
 
-  // Completeness = how much of THIS assessment (the beta question set) was answered.
-  const betaFields = QUESTIONS.map(q => q.field);
-  const answered = betaFields.filter(f => state.answers[f] !== undefined && state.answers[f] !== '').length;
-  const completeness = Math.round(answered / betaFields.length * 100);
-
   const bars = report.dimensions.filter(d => d.score != null).map(d => `
     <div class="dim-bar-row">
       <div class="dim-bar-meta">
@@ -340,7 +335,6 @@ function renderProfile(report) {
       <p class="chart-title">Your dimensions</p>
       <div class="dim-bars">${bars}</div>
       <p class="chart-legend">Each bar shows where you sit on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it simply describes you.</p>
-      <p class="chart-legend"><strong>Assessment completed: ${completeness}%</strong>${completeness >= 100 ? ' — you answered everything in this set.' : ' — a few answers were skipped.'}</p>
     </div>
     <div class="dim-callout" style="margin-top:16px;"><span class="dim-callout-icon">i</span><div>This beta uses Alunn's <strong>starter question set</strong>. The full version adds further question sets that deepen every dimension even more.</div></div>
     <div class="report-card">${sections}</div>

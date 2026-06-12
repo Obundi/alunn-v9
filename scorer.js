@@ -180,9 +180,26 @@ function resultLabel(dim, scores) {
       if (v === null) return null;
       return v >= L.VAL.Progressive ? 'Progressive' : v >= L.VAL.Mixed ? 'Mixed' : 'Traditional';
     }
-    case 'LIF': return 'gen';
+    case 'LIF': return lifestyleLabel(scores);
     default: return null;
   }
+}
+
+// A one-word Lifestyle outcome name, from social energy (bigE) + ambition (ambTrait).
+function lifestyleLabel(scores) {
+  const soc = scores.bigE, amb = scores.ambTrait;
+  if (soc === null && amb === null) return null;
+  const socHigh = soc !== null && soc >= 70;
+  const socLow  = soc !== null && soc <= 40;
+  const ambHigh = amb !== null && amb >= 80;
+  const ambLow  = amb !== null && amb <= 40;
+  if (socHigh && ambHigh) return 'Dynamic';
+  if (socHigh)            return 'Social';
+  if (socLow && ambHigh)  return 'Focused';
+  if (socLow)             return 'Homebody';
+  if (ambHigh)            return 'Driven';
+  if (ambLow)             return 'Easygoing';
+  return 'Balanced';
 }
 
 // Per-dimension headline score shown on the solo profile bar (0–100).
@@ -301,5 +318,5 @@ function buildProfileReport(scores, displayName) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, lifestyleText, valuesText, scoredFieldList, avg, subAvg20 };
+  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, lifestyleText, lifestyleLabel, valuesText, scoredFieldList, avg, subAvg20 };
 }

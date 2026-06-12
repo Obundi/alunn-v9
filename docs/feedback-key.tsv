@@ -29,9 +29,9 @@ fb_profile_q13	fb_profile	13. The report length / readability was…	Too short /
 fb_profile_q14	fb_profile	14. I'd trust this to give me better matches than a normal app.	1–5 (Strongly disagree → Strongly agree)
   (Premium & pricing)			
 fb_profile_q15	fb_profile	15. This beta uses a starter question set. Would you answer more questions to unlock a deeper, more accurate profile?	Yes, gladly / Maybe / No
-fb_profile_q16	fb_profile	16. Would you pay a one-off fee for that deeper profile & fuller report?	No / Maybe / Yes
+fb_profile_q16	fb_profile	16. Would you pay a one-off fee for a personal report like this?	No / Maybe / Yes
 fb_profile_q17	fb_profile	17. If yes, what one-off price feels fair?	€4.99 / €9.99 / €14.99 / €19.99+
-fb_profile_q18	fb_profile	18. Would you subscribe to a premium Alunn account (ongoing matching + deeper insights)?	No / Maybe / Yes
+fb_profile_q18	fb_profile	18. Would you subscribe to a premium Alunn account — unlock more assessments to deepen your profile and improve your match quality?	No / Maybe / Yes
 fb_profile_q19	fb_profile	19. If yes, what monthly price feels fair?	€4.99/mo / €9.99/mo / €14.99/mo / €19.99+/mo
 fb_profile_q20	fb_profile	20. Which premium features would make it worth paying for?	A deeper, more accurate profile (more questions) · See who's compatible with you before matching · See who already likes you · Advanced match filters (values, lifestyle, etc.) · Unlimited matches & messaging · Full compatibility breakdown for every match · Relationship coaching & tips · Profile boost / more visibility · Undo / rewind a pass · Browse privately (incognito) · Match in other cities (travel mode) · Ad-free experience   [multi — joined by |]
   (Last bit)			

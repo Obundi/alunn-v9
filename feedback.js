@@ -287,7 +287,7 @@ const FORMS = {
       },
       {
         "n": 16,
-        "q": "Would you pay a one-off fee for that deeper profile & fuller report?",
+        "q": "Would you pay a one-off fee for a personal report like this?",
         "t": "single",
         "o": [
           "No",
@@ -308,7 +308,7 @@ const FORMS = {
       },
       {
         "n": 18,
-        "q": "Would you subscribe to a premium Alunn account (ongoing matching + deeper insights)?",
+        "q": "Would you subscribe to a premium Alunn account — unlock more assessments to deepen your profile and improve your match quality?",
         "t": "single",
         "o": [
           "No",

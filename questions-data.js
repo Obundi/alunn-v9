@@ -111,7 +111,8 @@ const HARD_FILTERS = [
   { id: 'Politics',      field: 'Politics',      label: 'Political leaning',               mandate: 'O', type: 'select', isNew: true, options: ['Left', 'Centre', 'Right', 'Apolitical', 'Prefer not to say'] },
   { id: 'Pets',          field: 'Pets',          label: 'Pets',                            mandate: 'O', type: 'select', isNew: true, options: ['Have pets', 'Want pets', 'Allergic', 'None'] },
   { id: 'Finances',      field: 'Finances',      label: 'Financial attitude',              mandate: 'O', type: 'select', options: ['Saver', 'Balanced', 'Spender', 'Prefer not to say'] },
-  { id: 'Languages',     field: 'Languages',     label: 'Languages spoken',                mandate: 'O', type: 'multi', isNew: true, options: ['English', 'Dutch', 'German', 'French', 'Spanish', 'Italian', 'Portuguese', 'Turkish', 'Arabic', 'Other'] }
+  { id: 'Languages',     field: 'Languages',     label: 'Languages spoken',                mandate: 'O', type: 'multi', isNew: true, options: ['English', 'Dutch', 'German', 'French', 'Spanish', 'Italian', 'Portuguese', 'Turkish', 'Arabic', 'Other'] },
+  { id: 'Interests',     field: 'Interests',     label: 'Hobbies & interests',             mandate: 'O', type: 'multi', isNew: true, options: ['Sports & fitness', 'Arts & culture', 'Music', 'Travel', 'Food & cooking', 'Gaming', 'Reading & writing', 'Outdoors & nature', 'Film & TV', 'Technology', 'Going out & nightlife', 'Wellness & mindfulness'] }
 ];
 
 const MANDATORY_FILTERS = HARD_FILTERS.filter(f => f.mandate === 'M').map(f => f.id);
