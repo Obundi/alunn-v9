@@ -112,7 +112,11 @@ p:last-of-type { margin-bottom: 0; }
   width: 100%;
   margin-top: 28px;
   box-shadow: 0 2px 12px rgba(193,68,14,0.25);
+  text-decoration: none;
+  box-sizing: border-box;
 }
+a.btn, a.btn:visited { color: var(--white); }
+a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 .btn:hover  { background: #b03a0c; box-shadow: 0 4px 20px rgba(193,68,14,0.35); }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
@@ -143,7 +147,10 @@ p:last-of-type { margin-bottom: 0; }
 .field input[type="email"],
 .field input[type="number"],
 .field select,
-.field textarea {
+.field textarea,
+.question-block input[type="text"],
+.question-block input[type="email"],
+.question-block textarea {
   width: 100%;
   border: 1.5px solid #e3ddd4;
   border-radius: 10px;
@@ -160,12 +167,17 @@ p:last-of-type { margin-bottom: 0; }
 }
 .field input:focus,
 .field select:focus,
-.field textarea:focus {
+.field textarea:focus,
+.question-block input:focus,
+.question-block textarea:focus {
   border-color: var(--forest);
   box-shadow: 0 0 0 3px rgba(27,67,50,0.10);
 }
-.field input::placeholder { color: #b8b2a8; }
-.field textarea { min-height: 90px; resize: vertical; }
+.field input::placeholder,
+.question-block input::placeholder,
+.question-block textarea::placeholder { color: #b8b2a8; }
+.field textarea,
+.question-block textarea { min-height: 90px; resize: vertical; }
 
 /* Custom dropdown arrow for selects */
 .field select {
@@ -211,6 +223,44 @@ p:last-of-type { margin-bottom: 0; }
   line-height: 1.5;
   cursor: pointer;
 }
+
+/* ── Dimension intro callout ── */
+.dim-callout {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #f0ede8;
+  border-left: 3px solid var(--terracotta);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 28px;
+  font-size: 0.92rem;
+  color: var(--mid);
+  line-height: 1.55;
+}
+.dim-callout strong { color: var(--forest); }
+.dim-callout-icon {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--terracotta);
+  color: #fff;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+
+/* ── Profile chart legend ── */
+.chart-legend {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.5;
+  margin-top: 14px;
+}
+.chart-legend strong { color: #fff; }
 
 /* ── Scale question ── */
 .question-block {

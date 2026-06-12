@@ -139,14 +139,18 @@ function init() {
   QUESTION_GROUPS.forEach((g, i) => screens.push(buildQScreen(app, g, 2 + i)));
 
   // last-1 — report
+  // N-1 — assessment-experience feedback (shown BEFORE the profile)
+  const assessFb = makeScreen('screen-assess-fb');
+  assessFb.innerHTML = `${logoHtml(true)}
+    <p class="step-counter">Before your results</p>
+    <h2>Quick reactions first</h2>
+    <p class="screen-intro-text">You're done — your profile is ready. Before we show it, a few quick questions about how the assessment <em>felt</em>. This is the most valuable thing you can give the beta.</p>
+    <div id="assess-fb-mount"></div>`;
+  app.appendChild(assessFb); screens.push(assessFb);
+
+  // N — profile reveal
   const report = makeScreen('screen-report');
-  report.innerHTML = `${logoHtml(true)}
-    <h2>Your profile</h2>
-    <p class="screen-intro-text">Generated from your answers. A starting point for reflection, not a verdict.</p>
-    <div class="error-msg" id="err-submit">Something went wrong — please try again.</div>
-    <button class="btn" id="btn-submit">Submit &amp; reveal my profile</button>
-    <button class="btn btn-secondary" id="btn-report-back">Back</button>
-    <div id="report-content" style="display:none;"></div>`;
+  report.innerHTML = `<div id="report-content"></div>`;
   app.appendChild(report); screens.push(report);
 
   wireEvents();
@@ -161,7 +165,7 @@ function buildQScreen(app, group, stepNum) {
   screen.innerHTML = `${logoHtml(true)}
     <p class="step-counter">Part ${part} of ${total}</p>
     <h2>${escHtml(group.title)}</h2>
-    <p class="screen-intro-text">${group.intro}</p>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>${group.intro}</div></div>
     ${qsHtml}
     <div class="error-msg" id="err-q-${stepNum}">Please answer every question to continue.</div>`;
   app.appendChild(screen);
@@ -217,13 +221,39 @@ function wireEvents() {
         return;
       }
       document.getElementById('err-q-' + step).classList.remove('visible');
-      showScreen(idx + 1);
+      // If the next screen is the assessment-feedback step, save answers and open it.
+      if (screens[idx + 1] && screens[idx + 1].id === 'screen-assess-fb') {
+        enterAssessFeedback();
+      } else {
+        showScreen(idx + 1);
+      }
     });
     screen.querySelector('[data-qback]').addEventListener('click', () => showScreen(idx - 1));
   });
+}
 
-  document.getElementById('btn-report-back').addEventListener('click', () => showScreen(screens.length - 2));
-  document.getElementById('btn-submit').addEventListener('click', submitAndScore);
+// Save the questionnaire (once), then show the embedded assessment-feedback form.
+function enterAssessFeedback() {
+  ensureSubmitted();
+  const assessIdx = screens.findIndex(s => s.id === 'screen-assess-fb');
+  const mount = document.getElementById('assess-fb-mount');
+  if (mount && !mount.dataset.rendered) {
+    mount.dataset.rendered = '1';
+    fbRenderInto('assessment', mount, {
+      embedded: true,
+      presetEmail: state.email,
+      submitLabel: 'Send & reveal my profile',
+      skip: { label: 'Skip — just show my profile', onSkip: revealProfile },
+      onSubmitted: revealProfile
+    });
+  }
+  showScreen(assessIdx);
+}
+
+function revealProfile() {
+  const scores = scoreAnswers(state.answers);
+  renderProfile(buildProfileReport(scores, state.name));
+  showScreen(screens.findIndex(s => s.id === 'screen-report'));
 }
 
 function collectAndValidateSetup() {
@@ -255,13 +285,11 @@ function collectAndValidateSetup() {
   showScreen(2);
 }
 
-/* ── submit + score ─────────────────────────────────────────────────────────*/
-async function submitAndScore() {
-  const btn = document.getElementById('btn-submit');
-  const err = document.getElementById('err-submit');
-  btn.disabled = true; btn.textContent = 'Sending…';
-  err.classList.remove('visible');
-
+/* ── save the questionnaire (fire-and-forget, once) ─────────────────────────*/
+let submitted = false;
+function ensureSubmitted() {
+  if (submitted) return;
+  submitted = true;
   const payload = {
     type: 'questionnaire',
     name: state.name, email: state.email,
@@ -269,18 +297,11 @@ async function submitAndScore() {
     ...state.answers
   };
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    fetch(APPS_SCRIPT_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload), mode: 'no-cors'
     });
-  } catch (e) { /* no-cors may throw; treat as sent */ }
-
-  const scores = scoreAnswers(state.answers);
-  const report = buildProfileReport(scores, state.name);
-  renderProfile(report);
-
-  btn.style.display = 'none';
-  document.getElementById('btn-report-back').style.display = 'none';
+  } catch (e) { /* no-cors may throw; ignore */ }
 }
 
 function renderProfile(report) {
@@ -307,10 +328,15 @@ function renderProfile(report) {
 
   const who = report.name && report.name !== 'You' ? `${escHtml(report.name)}'s profile` : 'Your profile';
   el.innerHTML = `
+    ${logoHtml(true)}
+    <h2>Your profile</h2>
+    <p class="screen-intro-text">Here's what your answers say about how you connect. A starting point for reflection — not a verdict.</p>
     <div class="report-chart-card">
       <p class="report-name">${who}</p>
-      <p class="chart-title">Your dimensions <span class="org">· profile clarity ${report.clarity}%</span></p>
+      <p class="chart-title">Your dimensions</p>
       <div class="dim-bars">${bars}</div>
+      <p class="chart-legend">Each bar is your score on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it just describes you.</p>
+      <p class="chart-legend"><strong>Profile clarity ${report.clarity}%</strong> — how much of the assessment you completed. ${report.clarity >= 100 ? 'You answered everything, so this profile is as accurate as it gets.' : 'Answering more would sharpen it.'}</p>
     </div>
     <div class="report-card">${sections}</div>
     <p class="report-disclaimer">Alunn profiles are for personal guidance only — not a clinical assessment, and they don't predict any specific outcome. Use this as a starting point for reflection, not a verdict.</p>
@@ -318,9 +344,8 @@ function renderProfile(report) {
       <button class="btn btn-secondary btn-pdf" style="flex:1;" onclick="window.print()">Save as PDF</button>
     </div>
     <div class="feedback-nudge">
-      <p>Your honest reaction is the most valuable thing you can give this beta. Two quick forms:</p>
-      <a class="btn" href="fb-assessment.html?email=${encodeURIComponent(state.email)}">How was the assessment? →</a>
-      <a class="btn" href="fb-profile.html?email=${encodeURIComponent(state.email)}">Is your profile accurate? →</a>
+      <p>One last thing — does this profile actually feel like you? Tell us where it's right and where it's off:</p>
+      <a class="btn" href="fb-profile.html?email=${encodeURIComponent(state.email)}">Rate my profile's accuracy →</a>
     </div>`;
 
   requestAnimationFrame(() => setTimeout(() => {

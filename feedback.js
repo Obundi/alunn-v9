@@ -303,56 +303,13 @@ const FORMS = {
   },
   "match": {
     "title": "Couple match-report feedback",
-    "intro": "For couples — each partner fills this in privately. Part 1 is about your relationship (kept private); Part 2 is about the report.",
+    "intro": "For couples — each partner fills this in privately. It's only about whether the compatibility report described the two of you accurately. No questions about your relationship itself.",
     "postType": "fb_match",
     "questions": [
       {
         "n": 1,
         "q": "Your email (to link with your assessment — kept private)",
         "t": "email"
-      },
-      {
-        "n": 2,
-        "q": "Your relationship status right now",
-        "t": "single",
-        "o": [
-          "Together",
-          "Recently separated",
-          "Broken up"
-        ]
-      },
-      {
-        "n": 3,
-        "q": "How long together (or how long were you)?",
-        "t": "single",
-        "o": [
-          "<6 mo",
-          "6–12 mo",
-          "1–3 yr",
-          "3–7 yr",
-          "7+ yr"
-        ]
-      },
-      {
-        "n": 4,
-        "q": "My partner meets my needs well.",
-        "t": "scale"
-      },
-      {
-        "n": 5,
-        "q": "Overall, I am satisfied with our relationship.",
-        "t": "scale"
-      },
-      {
-        "n": 6,
-        "q": "Our relationship is better than most.",
-        "t": "scale"
-      },
-      {
-        "n": 7,
-        "q": "I often wish I hadn't gotten into this relationship. (reverse)",
-        "t": "scale",
-        "rev": true
       },
       {
         "n": 8,
@@ -495,19 +452,24 @@ const FORMS = {
 function fbEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fbParam(name){return new URLSearchParams(location.search).get(name)||'';}
 
-function fbRender(){
-  const form = FORMS[window.FORM_ID];
-  const app = document.getElementById('fb-app');
-  const presetEmail = fbParam('email');
-  const parts = [`<div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>`,
-    `<h2>${fbEsc(form.title)}</h2>`,
-    `<p class="screen-intro-text">${fbEsc(form.intro)}</p>`];
+// Build the form's inner HTML (everything except the submit button).
+function fbFormInner(form, presetEmail, embedded){
+  const parts = [];
+  if(!embedded){
+    parts.push(`<div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>`);
+    parts.push(`<h2>${fbEsc(form.title)}</h2>`);
+  }
+  parts.push(`<p class="screen-intro-text">${fbEsc(form.intro)}</p>`);
 
-  // Email field (linking key). For the match form it's question 1; otherwise prepend one.
+  // Email field (linking key). The match form has it as question 1; others prepend it.
   const hasEmailQ = form.questions.some(q=>q.t==='email');
   if(!hasEmailQ){
-    parts.push(`<div class="field"><label>Your email <span class="req">*</span></label>
-      <input type="email" id="fb-email" value="${fbEsc(presetEmail)}" placeholder="you@example.com"></div>`);
+    if(embedded && presetEmail){
+      parts.push(`<input type="hidden" id="fb-email" value="${fbEsc(presetEmail)}">`);
+    } else {
+      parts.push(`<div class="field"><label>Your email <span class="req">*</span></label>
+        <input type="email" id="fb-email" value="${fbEsc(presetEmail)}" placeholder="you@example.com"></div>`);
+    }
   }
 
   form.questions.forEach(q=>{
@@ -530,14 +492,27 @@ function fbRender(){
   });
 
   parts.push(`<div class="error-msg" id="fb-err">Please add your email so we can link your feedback.</div>`);
-  parts.push(`<button class="btn" id="fb-submit" onclick="fbSubmit()">Submit feedback</button>`);
-  app.innerHTML = `<div class="screen active"><div class="card">${parts.join('')}</div></div>`;
+  return parts.join('');
 }
 
-async function fbSubmit(){
-  const form = FORMS[window.FORM_ID];
-  const btn=document.getElementById('fb-submit'); const err=document.getElementById('fb-err');
-  const emailEl=document.getElementById('fb-email');
+/* Render a form into a mount element.
+   opts: { embedded, presetEmail, submitLabel, onSubmitted, skip:{label,onSkip} } */
+function fbRenderInto(formId, mountEl, opts){
+  opts = opts || {};
+  const form = FORMS[formId];
+  const presetEmail = opts.presetEmail != null ? opts.presetEmail : fbParam('email');
+  const inner = fbFormInner(form, presetEmail, opts.embedded);
+  const submitLabel = opts.submitLabel || 'Submit feedback';
+  const skipBtn = opts.skip ? `<button class="btn btn-secondary" id="fb-skip">${fbEsc(opts.skip.label)}</button>` : '';
+  const body = inner + `<button class="btn" id="fb-submit">${submitLabel}</button>` + skipBtn;
+  mountEl.innerHTML = opts.embedded ? body : `<div class="screen active"><div class="card">${body}</div></div>`;
+  mountEl.querySelector('#fb-submit').addEventListener('click', () => fbSubmit(form, mountEl, opts));
+  if(opts.skip) mountEl.querySelector('#fb-skip').addEventListener('click', opts.skip.onSkip);
+}
+
+async function fbSubmit(form, mountEl, opts){
+  const btn=mountEl.querySelector('#fb-submit'); const err=mountEl.querySelector('#fb-err');
+  const emailEl=mountEl.querySelector('#fb-email');
   const email=(emailEl?emailEl.value:'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.classList.add('visible'); emailEl&&emailEl.scrollIntoView({behavior:'smooth',block:'center'}); return; }
   err.classList.remove('visible');
@@ -547,12 +522,12 @@ async function fbSubmit(){
     if(q.section||q.t==='email') return;
     const id=`${form.postType}_q${q.n}`;
     if(q.t==='multi'){
-      const box=document.querySelector(`[data-multi="${id}"]`);
+      const box=mountEl.querySelector(`[data-multi="${id}"]`);
       payload[id]=box?[...box.querySelectorAll('input:checked')].map(i=>i.value).join('|'):'';
     } else if(q.t==='open'){
-      const t=document.querySelector(`[name="${id}"]`); payload[id]=t?t.value.trim():'';
+      const t=mountEl.querySelector(`[name="${id}"]`); payload[id]=t?t.value.trim():'';
     } else {
-      const sel=document.querySelector(`input[name="${id}"]:checked`); payload[id]=sel?sel.value:'';
+      const sel=mountEl.querySelector(`input[name="${id}"]:checked`); payload[id]=sel?sel.value:'';
     }
   });
 
@@ -560,11 +535,18 @@ async function fbSubmit(){
   try{
     await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
   }catch(e){}
-  document.getElementById('fb-app').innerHTML=`<div class="screen active"><div class="card" style="text-align:center;">
+
+  if(typeof opts.onSubmitted === 'function'){ opts.onSubmitted(); return; }
+  mountEl.innerHTML=`<div class="screen active"><div class="card" style="text-align:center;">
     <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
     <div class="thankyou-icon">✓</div><h2>Thank you</h2>
     <p class="screen-intro-text">Your feedback is in — this genuinely shapes how Alunn develops.</p></div></div>`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-document.addEventListener('DOMContentLoaded', fbRender);
+// Standalone page mode: fb-*.html sets window.FORM_ID and has a #fb-app container.
+document.addEventListener('DOMContentLoaded', function(){
+  if(window.FORM_ID && document.getElementById('fb-app')){
+    fbRenderInto(window.FORM_ID, document.getElementById('fb-app'), {});
+  }
+});
