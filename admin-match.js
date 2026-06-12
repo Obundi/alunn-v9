@@ -167,6 +167,131 @@ function starsFor(overall) {
   return null; // below lowest threshold ⇒ hidden
 }
 
+/* ── Dynamic, pairing-specific match narrative (meaning + coaching tip) ──────
+   Generates per-dimension text from the two people's actual styles / types and
+   the direction of any gap, rather than three fixed band paragraphs.
+   A, B = score objects; nA, nB = display names; band = High/Med/Low.
+   ─────────────────────────────────────────────────────────────────────────── */
+function matchNarrative(code, A, B, band, nA, nB) {
+  const lower = s => (s || '').toLowerCase();
+  const gap = (x, y) => Math.abs((x == null ? 0 : x) - (y == null ? 0 : y));
+  const art = w => (/^[aeiou]/i.test(w || '') ? 'an' : 'a'); // a / an
+
+  switch (code) {
+    case 'ATT': {
+      const aS = A.attStyle, bS = B.attStyle;
+      const secure = [aS, bS].filter(x => x === 'Secure').length;
+      const hasAnx = [aS, bS].includes('Anxious'), hasAvo = [aS, bS].includes('Avoidant');
+      if (secure === 2)
+        return { meaning: 'Both of you read as secure — closeness and independence both feel safe, and conflict tends to resolve without losing warmth. This is the steadiest attachment foundation there is.',
+                 tip: 'Keep naming what you each need when stressed — security grows when both of you feel free to either reach out or take space.' };
+      if (secure === 1) {
+        const secName = aS === 'Secure' ? nA : nB, othName = aS === 'Secure' ? nB : nA, othStyle = aS === 'Secure' ? bS : aS;
+        return { meaning: `${secName} brings a secure base, which tends to steady ${othName}'s more ${lower(othStyle)} moments — a genuinely stabilising pairing.`,
+                 tip: `${secName}: stay patient and consistent — that steadiness is exactly what helps ${othName} relax into the relationship.` };
+      }
+      if (hasAnx && hasAvo) {
+        const anxName = aS === 'Anxious' ? nA : nB, avoName = aS === 'Avoidant' ? nA : nB;
+        return { meaning: `A classic anxious–avoidant dynamic: ${anxName} reaches for closeness just as ${avoName} reaches for space. It can absolutely work, but it's the pattern most prone to push–pull.`,
+                 tip: `Agree a 'pause and return' rule: ${avoName} can take space, but commit to a time to reconnect so ${anxName} never feels abandoned.` };
+      }
+      if (aS === bS)
+        return { meaning: `You share an ${lower(aS)} leaning — you'll instinctively understand each other's wiring, though neither of you naturally plays the calm anchor when things heat up.`,
+                 tip: 'Watch for moments where you amplify each other; one of you deliberately slowing down breaks the loop.' };
+      if ([aS, bS].includes('Fearful'))
+        return { meaning: 'At least one of you carries a fearful (mixed) pattern — wanting closeness and fearing it at once. Expect some push–pull; patience and consistency settle it over time.',
+                 tip: 'Go slow and keep things predictable — reliability is what quiets the push–pull.' };
+      return { meaning: 'Your attachment styles are a mixed pairing — workable with awareness around when one of you wants closeness and the other wants space.',
+               tip: 'When one reaches and the other retreats, name the pattern out loud instead of reacting to it.' };
+    }
+
+    case 'COM': {
+      const a = A.comStyle, b = B.comStyle;
+      const pitfall = { Direct: 'being too blunt', Expressive: 'talking over the actual issue', Analytical: 'going quiet for too long', Harmonious: 'avoiding the hard topic' };
+      if (a === b)
+        return { meaning: `You both communicate in a ${lower(a)} style, so you'll recognise each other's instincts and rarely misread intent.`,
+                 tip: `Shared style makes this easy — just guard against both of you ${pitfall[a] || 'falling into the same blind spot'}.` };
+      const pair = [a, b];
+      if (pair.includes('Analytical') && pair.includes('Expressive')) {
+        const exp = a === 'Expressive' ? nA : nB, ana = a === 'Analytical' ? nA : nB;
+        return { meaning: `${exp} processes out loud and in the moment, while ${ana} needs to go quiet and think first. Unspoken, ${exp} can read ${ana}'s silence as withdrawal.`,
+                 tip: `${ana}: say "I need time, not distance." ${exp}: give that space without chasing.` };
+      }
+      if (pair.includes('Direct') && pair.includes('Harmonious')) {
+        const dir = a === 'Direct' ? nA : nB, har = a === 'Harmonious' ? nA : nB;
+        return { meaning: `${dir} raises things head-on; ${har} prefers to keep the peace. That can balance well — as long as ${har}'s calm isn't hiding unspoken issues.`,
+                 tip: `${har}: voice one small thing early. ${dir}: lead with a little warmth so directness lands as care.` };
+      }
+      return { meaning: `Your communication styles differ — ${lower(a)} (${nA}) versus ${lower(b)} (${nB}) — workable with a little translation between your approaches.`,
+               tip: 'Each say how you handle a tough conversation, so neither style gets misread in the moment.' };
+    }
+
+    case 'POL': {
+      if (band === 'High')
+        return { meaning: `What each of you wants in a partner closely matches who the other actually is — the attraction here is well-founded, not just chemistry.`,
+                 tip: 'Name what drew you together, and keep choosing it as the novelty fades.' };
+      if (band === 'Med')
+        return { meaning: `Some of what you each look for lines up with who the other is, with a few real gaps — a fair fit with room to appreciate the differences.`,
+                 tip: 'Treat the differences as range, not as something wrong.' };
+      return { meaning: `There's a gap between what one of you wants and who the other is — attraction may spark, then cool as the differences surface.`,
+               tip: 'Be honest early about whether those differences energise you or drain you.' };
+    }
+
+    case 'INT': {
+      const g = gap(A.intLvl, B.intLvl);
+      if (g <= 15)
+        return { meaning: 'Your needs for physical chemistry and affection run at a similar intensity — you\'re unlikely to leave each other wanting.',
+                 tip: 'Keep talking openly about desire; aligned now doesn\'t mean aligned forever.' };
+      const hi = A.intLvl > B.intLvl ? nA : nB, lo = A.intLvl > B.intLvl ? nB : nA;
+      return { meaning: `${hi} places more weight on physical closeness and affection than ${lo} does — a real but manageable difference if it's spoken about.`,
+               tip: 'Have the explicit conversation early; a mismatch left unspoken quietly erodes connection.' };
+    }
+
+    case 'VAL': {
+      if (A.valLvl == null || B.valLvl == null) return { meaning: '', tip: '' };
+      const g = gap(A.valLvl, B.valLvl);
+      if (g <= 20)
+        return { meaning: 'You\'re closely aligned in outlook and core values — one of the strongest predictors of going the distance.',
+                 tip: 'Lean on this shared ground when you disagree on the smaller things.' };
+      const prog = A.valLvl > B.valLvl ? nA : nB, trad = A.valLvl > B.valLvl ? nB : nA;
+      return { meaning: `${prog} leans more progressive while ${trad} leans more traditional — bridgeable, but worth being clear about which differences matter.`,
+               tip: 'Test it on something concrete — family, money, faith — before getting deeply invested.' };
+    }
+
+    case 'DRV': {
+      const a = A.drvType, b = B.drvType;
+      if (a === b)
+        return { meaning: `You both come to a relationship as ${a}s — at the core you want the same thing from it.`,
+                 tip: 'Set shared goals that honour the mode you both came for.' };
+      const note = band === 'High' ? 'your drives pull in much the same direction'
+                 : band === 'Med' ? 'compatible drives, even if not identical'
+                 : 'you want quite different things from the relationship at its core';
+      return { meaning: `${nA} is ${art(a)} ${a} and ${nB} is ${art(b)} ${b} — ${note}.`,
+               tip: band === 'Low' ? 'Surface it directly — "what is this relationship for?" — rather than assuming you\'ll converge.'
+                                   : `Make room for both modes: ${art(a)} ${a} and ${art(b)} ${b} thrive when each values what the other brings.` };
+    }
+
+    case 'LIF': {
+      const g = gap(A.lifLvl, B.lifLvl);
+      if (g <= 15)
+        return { meaning: 'Your day-to-day rhythms — pace, social energy, ambition — line up easily, so there\'s little routine friction.',
+                 tip: 'Enjoy the ease, and revisit as life circumstances change.' };
+      const bits = [];
+      if (gap(A.ambTrait, B.ambTrait) >= 30) {
+        const hi = A.ambTrait > B.ambTrait ? nA : nB; bits.push(`${hi} is the more career-driven of you`);
+      }
+      if (gap(A.bigE, B.bigE) >= 30) {
+        const hi = A.bigE > B.bigE ? nA : nB; bits.push(`${hi} is the more socially energetic`);
+      }
+      const detail = bits.length ? ` (${bits.join(', ')})` : '';
+      return { meaning: `Your everyday rhythms run at different speeds${detail} — fine with a few explicit agreements about time and energy.`,
+               tip: 'Agree on rhythms — going out versus staying in, how much drive matters — before they become a recurring negotiation.' };
+    }
+
+    default: return { meaning: '', tip: '' };
+  }
+}
+
 /* ── Full bidirectional match (§6) ──────────────────────────────────────────*/
 function matchPair(personA, personB) {
   const A = personA.scores, B = personB.scores;
@@ -193,12 +318,16 @@ function matchPair(personA, personB) {
   }
   const overall = blocked || !wSum ? null : Math.round(wxSum / wSum);
 
-  // Per-dimension report band + text (High≥75 / Med≥55 / Low)
+  // Per-dimension report band + dynamic, pairing-specific text
   const dims = DIMENSIONS.map(d => {
     const m = perDim[d.code];
     const band = m === null ? null : (m >= ENGINE.matchBands.High ? 'High' : m >= ENGINE.matchBands.Med ? 'Med' : 'Low');
-    const key = m === null ? null : `M|${d.code}|${band}`;
-    const txt = (key && typeof MATCH_TEXT !== 'undefined' && MATCH_TEXT[key]) || { meaning: '', tip: '' };
+    let txt = { meaning: '', tip: '' };
+    if (m !== null) {
+      txt = matchNarrative(d.code, A, B, band, personA.name || 'Partner A', personB.name || 'Partner B');
+      // Safety net: fall back to the band library if a generator returns nothing.
+      if (!txt.meaning && typeof MATCH_TEXT !== 'undefined') txt = MATCH_TEXT[`M|${d.code}|${band}`] || txt;
+    }
     return { code: d.code, name: d.name, match: m, band, meaning: txt.meaning, tip: txt.tip };
   });
 
@@ -223,5 +352,5 @@ function rankMatches(target, candidates) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { matchPair, rankMatches, polarityMatch, hardFilterGate, starsFor, GATE };
+  module.exports = { matchPair, rankMatches, polarityMatch, hardFilterGate, starsFor, matchNarrative, GATE };
 }

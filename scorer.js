@@ -202,13 +202,92 @@ function dimScore(dim, scores) {
   }
 }
 
+/* ── Lifestyle "about you" + tip, generated from the actual answers ──────────
+   Beta lifestyle signal = ambition (ambTrait ← LIF_T103) + social energy
+   (bigE ← BIG_C03). Falls back to the generic LIF|gen text if neither answered.
+   ─────────────────────────────────────────────────────────────────────────── */
+function lifestyleText(scores) {
+  const amb = scores.ambTrait;  // 0–100 (1–5 item ×20)
+  const soc = scores.bigE;      // 0–100 (extraversion / social energy)
+  if (amb === null && soc === null) {
+    return (typeof PROFILE_TEXT !== 'undefined' && PROFILE_TEXT['LIF|gen']) || { about: '', tip: '' };
+  }
+
+  const socPhrase = soc === null ? null
+    : soc >= 70 ? 'socially energetic — you recharge around people and an active social life suits you'
+    : soc <= 40 ? 'more low-key and home-centred — quiet time and smaller circles are how you recharge'
+    : 'socially balanced — you enjoy people but value your quieter time too';
+
+  const ambPhrase = amb === null ? null
+    : amb >= 70 ? 'strongly driven about your career and goals'
+    : amb <= 40 ? 'relaxed about career ambition, putting other parts of life first'
+    : 'moderately ambitious — you care about progress without letting it run the show';
+
+  let about;
+  if (socPhrase && ambPhrase) {
+    about = `Day to day, you're ${socPhrase}, and you're ${ambPhrase}. Lifestyle fit is really about matching rhythms — a partner whose social pace and ambition run at a similar speed to yours will mean less friction over time.`;
+  } else if (socPhrase) {
+    about = `Day to day, you're ${socPhrase}. Lifestyle fit is about matching rhythms — a partner with a similar social pace means less friction over time.`;
+  } else {
+    about = `On ambition, you're ${ambPhrase}. Lifestyle fit is about matching rhythms — a partner whose drive runs at a similar speed will feel easier over time.`;
+  }
+
+  // Tip keyed to the stronger signal.
+  let tip;
+  if (soc !== null && soc >= 70) tip = 'Look for a partner who enjoys an active social life too — or who is genuinely happy to let you have yours.';
+  else if (soc !== null && soc <= 40) tip = "Say early that quiet nights in are how you recharge, so a more social partner doesn't read it as distance.";
+  else if (amb !== null && amb >= 70) tip = 'Be clear that your drive matters to you, so you find someone who admires it rather than competes with it.';
+  else tip = 'Talk about going-out-versus-staying-in and how much ambition matters early, before they become a recurring negotiation.';
+
+  return { about, tip };
+}
+
+/* ── Values "about you" + tip, generated from the actual answer ──────────────
+   Beta values signal = VAL_C01 (Traditional 1 ↔ 5 Progressive). Text stays
+   consistent with the Progressive / Mixed / Traditional chip, with finer
+   wording inside each band. Falls back to the library if unanswered.
+   ─────────────────────────────────────────────────────────────────────────── */
+function valuesText(scores) {
+  const v = scores.valLvl; // 0–100 (1–5 item ×20)
+  if (v === null) {
+    return (typeof PROFILE_TEXT !== 'undefined' && PROFILE_TEXT['VAL|Mixed']) || { about: '', tip: '' };
+  }
+  const B = ENGINE.labelBands.VAL; // Progressive ≥67, Mixed ≥34, else Traditional
+  if (v >= B.Progressive) {
+    return {
+      about: `Your outlook leans ${v >= 90 ? 'strongly progressive and open' : 'open and progressive'}. You'll connect most easily with someone who shares that worldview, especially on the things you hold strongly.`,
+      tip: 'Find out early where a partner stands on the things you hold most strongly.'
+    };
+  }
+  if (v >= B.Mixed) {
+    const lean = v >= 55 ? 'a pragmatic middle, with a mild progressive lean'
+              : v <= 45 ? 'a pragmatic middle, with a mild traditional lean'
+              : 'a pragmatic middle';
+    return {
+      about: `Your values sit in ${lean} — you can bridge differing worldviews, which widens your compatible field.`,
+      tip: "Decide which value differences are 'agree to differ' and which are genuinely non-negotiable."
+    };
+  }
+  return {
+    about: `Your outlook leans ${v <= 20 ? 'strongly traditional and grounded' : 'traditional and grounded'}. Shared values will matter to you; look for alignment on family and the things that anchor you.`,
+    tip: 'Be clear about your anchors so a partner can meet them honestly.'
+  };
+}
+
 /* ── Individual profile report (§7.1: score, bar, about-you, growth tip) ────── */
 function buildProfileReport(scores, displayName) {
   const dims = DIMENSIONS.map(d => {
     const label = resultLabel(d.code, scores);
     const score = dimScore(d.code, scores);
-    const key = d.code === 'LIF' ? 'LIF|gen' : `${d.code}|${label}`;
-    const txt = (typeof PROFILE_TEXT !== 'undefined' && PROFILE_TEXT[key]) || { about: '', tip: '' };
+    let txt;
+    if (d.code === 'LIF') {
+      txt = lifestyleText(scores);
+    } else if (d.code === 'VAL') {
+      txt = valuesText(scores);
+    } else {
+      const key = `${d.code}|${label}`;
+      txt = (typeof PROFILE_TEXT !== 'undefined' && PROFILE_TEXT[key]) || { about: '', tip: '' };
+    }
     return {
       code: d.code,
       name: d.name,
@@ -222,5 +301,5 @@ function buildProfileReport(scores, displayName) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, scoredFieldList, avg, subAvg20 };
+  module.exports = { scoreAnswers, resultLabel, dimScore, buildProfileReport, lifestyleText, valuesText, scoredFieldList, avg, subAvg20 };
 }

@@ -144,7 +144,7 @@ function init() {
   assessFb.innerHTML = `${logoHtml(true)}
     <p class="step-counter">Before your results</p>
     <h2>Quick reactions first</h2>
-    <p class="screen-intro-text">You're done — your profile is ready. Before we show it, a few quick questions about how the assessment <em>felt</em>. This is the most valuable thing you can give the beta.</p>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>You're done — your profile is ready. Before we show it, a few quick questions about how the assessment <strong>felt</strong>. Honest reactions, even critical ones, are the most valuable thing you can give this beta.</div></div>
     <div id="assess-fb-mount"></div>`;
   app.appendChild(assessFb); screens.push(assessFb);
 
@@ -243,7 +243,6 @@ function enterAssessFeedback() {
       embedded: true,
       presetEmail: state.email,
       submitLabel: 'Send & reveal my profile',
-      skip: { label: 'Skip — just show my profile', onSkip: revealProfile },
       onSubmitted: revealProfile
     });
   }
@@ -308,6 +307,11 @@ function renderProfile(report) {
   const el = document.getElementById('report-content');
   el.style.display = 'block';
 
+  // Completeness = how much of THIS assessment (the beta question set) was answered.
+  const betaFields = QUESTIONS.map(q => q.field);
+  const answered = betaFields.filter(f => state.answers[f] !== undefined && state.answers[f] !== '').length;
+  const completeness = Math.round(answered / betaFields.length * 100);
+
   const bars = report.dimensions.filter(d => d.score != null).map(d => `
     <div class="dim-bar-row">
       <div class="dim-bar-meta">
@@ -335,9 +339,10 @@ function renderProfile(report) {
       <p class="report-name">${who}</p>
       <p class="chart-title">Your dimensions</p>
       <div class="dim-bars">${bars}</div>
-      <p class="chart-legend">Each bar is your score on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it just describes you.</p>
-      <p class="chart-legend"><strong>Profile clarity ${report.clarity}%</strong> — how much of the assessment you completed. ${report.clarity >= 100 ? 'You answered everything, so this profile is as accurate as it gets.' : 'Answering more would sharpen it.'}</p>
+      <p class="chart-legend">Each bar shows where you sit on that dimension (0–100) — how strongly that trait shows up in your answers, not a grade. Higher isn't "better"; it simply describes you.</p>
+      <p class="chart-legend"><strong>Assessment completed: ${completeness}%</strong>${completeness >= 100 ? ' — you answered everything in this set.' : ' — a few answers were skipped.'}</p>
     </div>
+    <div class="dim-callout" style="margin-top:16px;"><span class="dim-callout-icon">i</span><div>This beta uses Alunn's <strong>starter question set</strong>. The full version adds further question sets that deepen every dimension even more.</div></div>
     <div class="report-card">${sections}</div>
     <p class="report-disclaimer">Alunn profiles are for personal guidance only — not a clinical assessment, and they don't predict any specific outcome. Use this as a starting point for reflection, not a verdict.</p>
     <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;">

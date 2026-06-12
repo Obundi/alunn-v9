@@ -1,7 +1,7 @@
 const FORMS = {
   "assessment": {
     "title": "How was the assessment?",
-    "intro": "A few quick questions about the experience of taking it. Honest reactions — even critical ones — are the most useful thing you can give this beta.",
+    "intro": "A few quick questions about how taking the assessment felt. Honest reactions — even critical ones — are the most useful thing you can give this beta.",
     "postType": "fb_assessment",
     "questions": [
       {
@@ -153,7 +153,7 @@ const FORMS = {
       },
       {
         "n": 4,
-        "q": "Accuracy — Relationship drive / goals",
+        "q": "Accuracy — Attraction (what draws you to a partner)",
         "t": "single",
         "o": [
           "Spot on",
@@ -189,7 +189,7 @@ const FORMS = {
       },
       {
         "n": 7,
-        "q": "Accuracy — Lifestyle",
+        "q": "Accuracy — Relationship drive / goals",
         "t": "single",
         "o": [
           "Spot on",
@@ -201,6 +201,18 @@ const FORMS = {
       },
       {
         "n": 8,
+        "q": "Accuracy — Lifestyle",
+        "t": "single",
+        "o": [
+          "Spot on",
+          "Mostly",
+          "Mixed",
+          "Off",
+          "Way off"
+        ]
+      },
+      {
+        "n": 9,
         "q": "My main result (e.g. your attachment style / drive type) felt…",
         "t": "single",
         "o": [
@@ -211,7 +223,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 9,
+        "n": 10,
         "q": "Did the profile tell you anything insightful about yourself?",
         "t": "single",
         "o": [
@@ -221,7 +233,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 10,
+        "n": 11,
         "q": "Was anything clearly wrong?",
         "t": "single",
         "o": [
@@ -231,20 +243,21 @@ const FORMS = {
         ]
       },
       {
-        "n": 11,
+        "n": 12,
         "q": "If something was wrong, which part?",
         "t": "multi",
         "o": [
           "Attachment",
           "Communication",
-          "Drive/goals",
+          "Attraction",
           "Intimacy",
           "Values",
+          "Drive",
           "Lifestyle"
         ]
       },
       {
-        "n": 12,
+        "n": 13,
         "q": "The report length / readability was…",
         "t": "single",
         "o": [
@@ -255,13 +268,26 @@ const FORMS = {
         ]
       },
       {
-        "n": 13,
+        "n": 14,
         "q": "I'd trust this to give me better matches than a normal app.",
         "t": "scale"
       },
       {
-        "n": 14,
-        "q": "Would you pay for a deeper personal report?",
+        "section": "Premium & pricing"
+      },
+      {
+        "n": 15,
+        "q": "This beta uses a starter question set. Would you answer more questions to unlock a deeper, more accurate profile?",
+        "t": "single",
+        "o": [
+          "Yes, gladly",
+          "Maybe",
+          "No"
+        ]
+      },
+      {
+        "n": 16,
+        "q": "Would you pay a one-off fee for that deeper profile & fuller report?",
         "t": "single",
         "o": [
           "No",
@@ -270,7 +296,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 15,
+        "n": 17,
         "q": "If yes, what one-off price feels fair?",
         "t": "single",
         "o": [
@@ -281,7 +307,50 @@ const FORMS = {
         ]
       },
       {
-        "n": 16,
+        "n": 18,
+        "q": "Would you subscribe to a premium Alunn account (ongoing matching + deeper insights)?",
+        "t": "single",
+        "o": [
+          "No",
+          "Maybe",
+          "Yes"
+        ]
+      },
+      {
+        "n": 19,
+        "q": "If yes, what monthly price feels fair?",
+        "t": "single",
+        "o": [
+          "€4.99/mo",
+          "€9.99/mo",
+          "€14.99/mo",
+          "€19.99+/mo"
+        ]
+      },
+      {
+        "n": 20,
+        "q": "Which premium features would make it worth paying for?",
+        "t": "multi",
+        "o": [
+          "A deeper, more accurate profile (more questions)",
+          "See who's compatible with you before matching",
+          "See who already likes you",
+          "Advanced match filters (values, lifestyle, etc.)",
+          "Unlimited matches & messaging",
+          "Full compatibility breakdown for every match",
+          "Relationship coaching & tips",
+          "Profile boost / more visibility",
+          "Undo / rewind a pass",
+          "Browse privately (incognito)",
+          "Match in other cities (travel mode)",
+          "Ad-free experience"
+        ]
+      },
+      {
+        "section": "Last bit"
+      },
+      {
+        "n": 21,
         "q": "Anything you wish your profile had covered?",
         "t": "multi",
         "o": [
@@ -295,7 +364,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 17,
+        "n": 22,
         "q": "Anything else about your profile?",
         "t": "open"
       }
@@ -312,12 +381,12 @@ const FORMS = {
         "t": "email"
       },
       {
-        "n": 8,
+        "n": 2,
         "q": "Overall, the report described us accurately.",
         "t": "scale"
       },
       {
-        "n": 9,
+        "n": 3,
         "q": "Accuracy — Attachment section",
         "t": "single",
         "o": [
@@ -329,7 +398,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 10,
+        "n": 4,
         "q": "Accuracy — Communication section",
         "t": "single",
         "o": [
@@ -341,8 +410,8 @@ const FORMS = {
         ]
       },
       {
-        "n": 11,
-        "q": "Accuracy — Polarity / attraction section",
+        "n": 5,
+        "q": "Accuracy — Attraction / polarity section",
         "t": "single",
         "o": [
           "Spot on",
@@ -353,19 +422,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 12,
-        "q": "Accuracy — Drive / goals section",
-        "t": "single",
-        "o": [
-          "Spot on",
-          "Mostly",
-          "Mixed",
-          "Off",
-          "Way off"
-        ]
-      },
-      {
-        "n": 13,
+        "n": 6,
         "q": "Accuracy — Intimacy section",
         "t": "single",
         "o": [
@@ -377,7 +434,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 14,
+        "n": 7,
         "q": "Accuracy — Values section",
         "t": "single",
         "o": [
@@ -389,7 +446,31 @@ const FORMS = {
         ]
       },
       {
-        "n": 15,
+        "n": 8,
+        "q": "Accuracy — Drive / goals section",
+        "t": "single",
+        "o": [
+          "Spot on",
+          "Mostly",
+          "Mixed",
+          "Off",
+          "Way off"
+        ]
+      },
+      {
+        "n": 9,
+        "q": "Accuracy — Lifestyle section",
+        "t": "single",
+        "o": [
+          "Spot on",
+          "Mostly",
+          "Mixed",
+          "Off",
+          "Way off"
+        ]
+      },
+      {
+        "n": 10,
         "q": "The compatibility score was…",
         "t": "single",
         "o": [
@@ -399,7 +480,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 16,
+        "n": 11,
         "q": "Did the report change how you see your dynamic?",
         "t": "single",
         "o": [
@@ -409,7 +490,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 17,
+        "n": 12,
         "q": "Report length / readability",
         "t": "single",
         "o": [
@@ -420,12 +501,12 @@ const FORMS = {
         ]
       },
       {
-        "n": 18,
+        "n": 13,
         "q": "It would be useful (e.g. as a conversation starter).",
         "t": "scale"
       },
       {
-        "n": 19,
+        "n": 14,
         "q": "Would you recommend Alunn to a friend?",
         "t": "single",
         "o": [
@@ -435,7 +516,7 @@ const FORMS = {
         ]
       },
       {
-        "n": 20,
+        "n": 15,
         "q": "Anything to add to or remove from the report?",
         "t": "open"
       }
@@ -458,8 +539,8 @@ function fbFormInner(form, presetEmail, embedded){
   if(!embedded){
     parts.push(`<div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>`);
     parts.push(`<h2>${fbEsc(form.title)}</h2>`);
+    parts.push(`<p class="screen-intro-text">${fbEsc(form.intro)}</p>`);
   }
-  parts.push(`<p class="screen-intro-text">${fbEsc(form.intro)}</p>`);
 
   // Email field (linking key). The match form has it as question 1; others prepend it.
   const hasEmailQ = form.questions.some(q=>q.t==='email');
@@ -531,7 +612,7 @@ async function fbSubmit(form, mountEl, opts){
     }
   });
 
-  btn.disabled=true; btn.textContent='Sending…';
+  btn.disabled=true; btn.innerHTML='<span class="btn-spinner"></span> Sending…';
   try{
     await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
   }catch(e){}

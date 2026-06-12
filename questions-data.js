@@ -47,6 +47,14 @@ const QUESTION_GROUPS = [
     ]
   },
   {
+    title: 'Intimacy & affection',
+    intro: '<strong>Intimacy</strong> is how central physical chemistry and affection are to how you bond. There\'s no better or worse here — just how strong this need runs for you, so we can match you with someone on a similar wavelength.',
+    questions: [
+      { n: 10, field: 'INT_T201', type: 'scale', text: 'How important is physical chemistry and sexual compatibility to you in a long-term partner?', anchors: ['Not important', 'Essential'] },
+      { n: 17, field: 'INT_T202', type: 'scale', text: 'I need regular physical affection (touch, closeness) to feel connected in a relationship.', anchors: ['Strongly disagree', 'Strongly agree'] }
+    ]
+  },
+  {
     title: 'Relationship drive',
     intro: '<strong>Relationship drive</strong> is what a relationship is fundamentally <em>for</em>, to you — building a life, easy companionship, shared growth, or deep understanding. Partners thrive when their core drives line up.',
     questions: [
@@ -54,14 +62,6 @@ const QUESTION_GROUPS = [
         options: [{ v: 'A', label: 'Building a life together' }, { v: 'B', label: 'Deep friendship' }, { v: 'C', label: 'Growth and adventure' }, { v: 'D', label: 'Being truly known' }] },
       { n: 15, field: 'DRV_C03', type: 'choice', text: 'What would make you most fulfilled in a long-term relationship is:',
         options: [{ v: 'A', label: 'Achieving things together' }, { v: 'B', label: 'Simply being together' }, { v: 'C', label: 'Growing together' }, { v: 'D', label: 'Understanding each other deeply' }] }
-    ]
-  },
-  {
-    title: 'Intimacy & affection',
-    intro: '<strong>Intimacy</strong> is how central physical chemistry and affection are to how you bond. There\'s no better or worse here — just how strong this need runs for you, so we can match you with someone on a similar wavelength.',
-    questions: [
-      { n: 10, field: 'INT_T201', type: 'scale', text: 'How important is physical chemistry and sexual compatibility to you in a long-term partner?', anchors: ['Not important', 'Essential'] },
-      { n: 17, field: 'INT_T202', type: 'scale', text: 'I need regular physical affection (touch, closeness) to feel connected in a relationship.', anchors: ['Strongly disagree', 'Strongly agree'] }
     ]
   },
   {
