@@ -6,17 +6,38 @@
    Each record holds raw answers keyed by field code plus filter fields.
    ============================================================================= */
 
-let ALL_PEOPLE = null; // cache of {raw, person} after first load
+let ALL_PEOPLE = null;   // cache of people after load
+let ADMIN_TOKEN_SESSION = (typeof ADMIN_PIN !== 'undefined' ? ADMIN_PIN : ''); // set on unlock
 
-function checkPin() {
+// Unlock by verifying the code against the BACKEND (not just config.js), so a
+// mismatched token stops you here instead of letting you in to a dead end.
+async function checkPin() {
   const val = document.getElementById('pin-input').value.trim();
-  if (val === ADMIN_PIN) {
+  const err = document.getElementById('err-pin');
+  const btn = document.getElementById('btn-unlock');
+  err.style.display = 'none';
+  if (!val) { err.textContent = 'Enter your access code.'; err.style.display = 'block'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getall&token=${encodeURIComponent(val)}`);
+    const data = await res.json();
+    if (data && data.ok === false) {           // backend said unauthorized
+      err.textContent = 'Wrong code — try again.'; err.style.display = 'block';
+      return;
+    }
+    // Correct code: remember it for the session and pre-load the data.
+    ADMIN_TOKEN_SESSION = val;
+    const list = Array.isArray(data) ? data : (data.people || data.records || []);
+    ALL_PEOPLE = list.map(toPerson);
     document.getElementById('lock-screen').classList.remove('active');
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('admin-screen').style.display = 'block';
     document.getElementById('admin-screen').classList.add('active');
-  } else {
-    document.getElementById('err-pin').style.display = 'block';
+  } catch (e) {
+    err.textContent = 'Could not reach the backend — check your connection and the URL in config.js.';
+    err.style.display = 'block';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Unlock'; }
   }
 }
 
@@ -39,10 +60,15 @@ function toPerson(raw) {
 
 async function loadAllPeople() {
   if (ALL_PEOPLE) return ALL_PEOPLE;
-  const url = `${APPS_SCRIPT_URL}?action=getall&token=${encodeURIComponent(ADMIN_PIN)}`;
+  const url = `${APPS_SCRIPT_URL}?action=getall&token=${encodeURIComponent(ADMIN_TOKEN_SESSION)}`;
   const res = await fetch(url);
   const data = await res.json();
-  const list = data.people || data.records || data || [];
+  if (data && data.ok === false) {
+    throw new Error(data.error === 'unauthorized'
+      ? 'Backend rejected the code. Reload and unlock again.'
+      : ('Backend error: ' + data.error));
+  }
+  const list = Array.isArray(data) ? data : (data.people || data.records || []);
   ALL_PEOPLE = list.map(toPerson);
   return ALL_PEOPLE;
 }
@@ -73,7 +99,7 @@ async function findTopMatches() {
     renderTopBar();
     applyTopFilters();
   } catch (e) {
-    err.textContent = 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
+    err.textContent = (e && e.message) ? e.message : 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
   } finally { spin.style.display = 'none'; }
 }
 
@@ -88,10 +114,19 @@ function tsOf(person) {
   return isNaN(d.getTime()) ? null : d.getTime();
 }
 
+const GATE_LABELS = { gender: 'Gender / orientation', kids: 'Children', reltype: 'Relationship type', intent: 'Relationship intent', age: 'Age range', religion: 'Religion' };
+
 function renderTopBar() {
   const el = document.getElementById('top-result');
   const cities = [...new Set(TOP.rows.map(r => (r.person.filters.City || '').trim()).filter(Boolean))].sort();
   const cityOpts = ['<option value="">Any city</option>'].concat(cities.map(c => `<option>${escA(c)}</option>`)).join('');
+  // Gate reasons actually present among the candidates (so we only show relevant toggles).
+  const presentCodes = [...new Set(TOP.rows.map(r => r.result.blockedCode).filter(Boolean))];
+  const anyLow = TOP.rows.some(r => r.result.hidden);
+  const reasonChecks = presentCodes.map(c =>
+    `<label class="gate-check"><input type="checkbox" class="tf-reason" value="${c}" checked> ${escA(GATE_LABELS[c] || c)}</label>`).join('')
+    + (anyLow ? `<label class="gate-check"><input type="checkbox" id="tf-low" value="low" checked> Below threshold</label>` : '');
+
   el.innerHTML = `
     <div class="result-header">Matches for ${escA(TOP.target.name)}</div>
     <div class="top-filters">
@@ -112,13 +147,22 @@ function renderTopBar() {
       </select></div>
       <div class="field"><label>&nbsp;</label><label class="checkbox-option" style="margin:0;"><input type="checkbox" id="tf-gated"><label for="tf-gated">Show gated/low</label></label></div>
     </div>
+    <div class="top-gatefilters" id="tf-reasons" style="display:none;">
+      <span class="tf-reasons-label">Show gated reasons:</span>${reasonChecks || '<span class="top-count" style="margin:0;">none in this set</span>'}
+    </div>
     <div id="top-count" class="top-count"></div>
     <div id="top-list"></div>
     <div id="top-more" style="margin-top:12px;"></div>`;
-  ['tf-search', 'tf-stars', 'tf-city', 'tf-when', 'tf-sort', 'tf-gated'].forEach(id => {
-    const node = document.getElementById(id);
-    node.addEventListener(id === 'tf-search' ? 'input' : 'change', () => { topShown = TOP_PAGE; applyTopFilters(); });
+
+  ['tf-search', 'tf-stars', 'tf-city', 'tf-when', 'tf-sort'].forEach(id => {
+    document.getElementById(id).addEventListener(id === 'tf-search' ? 'input' : 'change', () => { topShown = TOP_PAGE; applyTopFilters(); });
   });
+  const gatedBox = document.getElementById('tf-gated');
+  gatedBox.addEventListener('change', () => {
+    document.getElementById('tf-reasons').style.display = gatedBox.checked ? 'flex' : 'none';
+    topShown = TOP_PAGE; applyTopFilters();
+  });
+  el.querySelectorAll('.tf-reason, #tf-low').forEach(n => n.addEventListener('change', () => { topShown = TOP_PAGE; applyTopFilters(); }));
 }
 
 function applyTopFilters() {
@@ -130,11 +174,20 @@ function applyTopFilters() {
   const gated = document.getElementById('tf-gated').checked;
   const cutoff = days ? Date.now() - days * 86400000 : 0;
   const tAge = Number(TOP.target.filters.Age);
+  // Which gated reasons (and below-threshold) to include, from the reason row.
+  const allowedReasons = new Set([...document.querySelectorAll('.tf-reason:checked')].map(n => n.value));
+  const lowEl = document.getElementById('tf-low');
+  const showLow = !lowEl || lowEl.checked;
 
   let rows = TOP.rows.filter(r => {
     const res = r.result, p = r.person;
     const eligible = !res.blocked && !res.hidden && res.overall !== null;
-    if (!gated && !eligible) return false;
+    if (!gated) {
+      if (!eligible) return false;
+    } else {
+      if (res.blocked && !allowedReasons.has(res.blockedCode)) return false; // hide unwanted gate reasons
+      if (res.hidden && !showLow) return false;
+    }
     if (minScore && (res.overall === null || res.overall < minScore)) return false;
     if (city && (p.filters.City || '').trim() !== city) return false;
     if (cutoff) { const ts = tsOf(p); if (ts === null || ts < cutoff) return false; }
@@ -165,21 +218,26 @@ function applyTopFilters() {
 
 function topCard(r, i) {
   const res = r.result, p = r.person;
-  const blocked = res.blocked || res.hidden;
-  const right = blocked
-    ? `<span class="hf-badge-fail" title="${escA(res.blocked || 'Below display threshold')}">${res.blocked ? 'Gated' : 'Low'}</span>`
-    : `<span class="top-match-stars">${res.stars}</span><span class="top-match-rank" style="width:auto;color:var(--forest);font-size:1rem;">${res.overall}</span>`;
+  const flagged = !!(res.blocked || res.hidden);
+  // Gated/low rows show the SAME stars + score as a match — just with a tag + reason.
+  const right = (res.overall != null)
+    ? `<span class="top-match-stars">${res.stars || ''}</span><span class="top-match-rank" style="width:auto;color:var(--forest);font-size:1rem;">${res.overall}</span>`
+    : `<span class="hf-badge-fail">no score</span>`;
   const city = (p.filters.City || '').trim();
   const age = (p.filters.Age || '').toString().trim();
   const styles = [p.scores.attStyle, p.scores.comStyle, p.scores.drvType].filter(Boolean).join(' · ');
   const place = [city, age ? age + 'y' : ''].filter(Boolean).join(', ');
   const sub = [styles, place].filter(Boolean).join('  ·  ');
+  const flagLine = res.blocked
+    ? `<div class="top-match-gate"><span class="gate-pill">GATED</span>${escA(res.blocked)}</div>`
+    : (res.hidden ? `<div class="top-match-gate"><span class="gate-pill gate-pill-low">LOW</span>below the display threshold</div>` : '');
   return `
-    <div class="top-match-card">
-      <span class="top-match-rank">${blocked ? '–' : i + 1}</span>
+    <div class="top-match-card${flagged ? ' top-match-flagged' : ''}">
+      <span class="top-match-rank">${i + 1}</span>
       <div class="top-match-info">
         <div class="top-match-name">${escA(p.name)}</div>
         <div class="top-match-types">${escA(sub)}</div>
+        ${flagLine}
       </div>
       ${right}
       <button class="top-match-btn" onclick="loadMatchFromTop('${escA(TOP.target.email)}','${escA(p.email)}')">Report</button>
@@ -213,7 +271,7 @@ async function generateMatch() {
     if (!A || !B) { err.textContent = 'One or both emails not found.'; err.classList.add('visible'); return; }
     renderMatchReport(matchPair(A, B));
   } catch (e) {
-    err.textContent = 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
+    err.textContent = (e && e.message) ? e.message : 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
   } finally { spin.style.display = 'none'; }
 }
 
@@ -221,15 +279,9 @@ function renderMatchReport(m) {
   const el = document.getElementById('match-result');
   el.style.display = 'block';
 
-  if (m.blocked) {
-    el.innerHTML = `
-      <div class="report-chart-card" style="text-align:center;">
-        <p class="report-name">${escA(m.nameA)} &amp; ${escA(m.nameB)}</p>
-        <p class="stars-big">NOT A MATCH</p>
-      </div>
-      <div class="gate-banner">Hard-filter conflict: ${escA(m.blocked)}.</div>`;
-    return;
-  }
+  const gateBanner = m.blocked
+    ? `<div class="gate-banner">⚠ Hard-filter conflict: ${escA(m.blocked)}.<br>In normal matching this pair is hidden — shown here for your review only.</div>`
+    : '';
 
   const bars = m.dims.filter(d => d.match != null).map(d => `
     <div class="dim-bar-row">
@@ -249,8 +301,9 @@ function renderMatchReport(m) {
     <div class="report-chart-card" style="text-align:center;">
       <p class="report-name">${escA(m.nameA)} &amp; ${escA(m.nameB)}</p>
       <p class="stars-big">${m.stars || '–'}</p>
-      <p class="chart-title">Overall compatibility · ${m.overall}/100</p>
+      <p class="chart-title">Overall compatibility · ${m.overall}/100${m.blocked ? ' · gated' : ''}</p>
     </div>
+    ${gateBanner}
     <div class="report-chart-card"><p class="chart-title">By dimension</p><div class="dim-bars">${bars}</div></div>
     <div class="report-card">${sections}</div>
     <p class="report-disclaimer">For guidance and reflection only — not a clinical assessment or a prediction of any outcome.</p>
@@ -274,7 +327,7 @@ async function generateProfileReport() {
     if (!target) { err.textContent = 'No submission found.'; err.classList.add('visible'); return; }
     renderAdminProfile(buildProfileReport(target.scores, target.name));
   } catch (e) {
-    err.textContent = 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
+    err.textContent = (e && e.message) ? e.message : 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
   } finally { spin.style.display = 'none'; }
 }
 

@@ -11,7 +11,7 @@
    IMPORTANT: set ADMIN_TOKEN below to the SAME value as ADMIN_PIN in config.js.
    ============================================================================= */
 
-var ADMIN_TOKEN = 'CHANGE-ME-v9';   // must equal ADMIN_PIN in config.js
+var ADMIN_TOKEN = 'alunnobundi';   // must equal ADMIN_PIN in config.js
 
 // Get an email every time someone submits. Leave '' to switch notifications off.
 var OWNER_EMAIL = 'obiberg@hotmail.com';

@@ -36,6 +36,15 @@
     .top-filters .field { margin-bottom:0; flex:1; min-width:120px; }
     .top-filters .field label { margin-bottom:4px; }
     .top-count { font-size:0.82rem; color:var(--mid); margin-bottom:10px; }
+    .top-match-gate { font-size:0.76rem; color:var(--mid); margin-top:5px; display:flex; align-items:center; }
+    .gate-pill { display:inline-block; font-size:0.64rem; font-weight:700; letter-spacing:0.05em; color:#fff;
+                 background:#c0392b; border-radius:99px; padding:2px 8px; margin-right:7px; flex-shrink:0; }
+    .gate-pill-low { background:#b8860b; }
+    .top-match-flagged { border-color:#f0c9c0; background:#fdf6f4; }
+    .top-gatefilters { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; margin:-2px 0 14px; padding:11px 14px; background:#faf6f2; border-radius:10px; }
+    .tf-reasons-label { font-size:0.75rem; font-weight:700; color:var(--forest); text-transform:uppercase; letter-spacing:0.04em; }
+    .gate-check { display:flex; align-items:center; gap:6px; font-size:0.86rem; color:var(--dark); cursor:pointer; }
+    .gate-check input { width:16px; height:16px; accent-color:var(--terracotta); cursor:pointer; }
 
     /* When saving a generated report as PDF, print only the report — not the
        admin chrome — so it's identical to the user-facing profile PDF. */
@@ -65,7 +74,7 @@
     <div class="lock-screen">
       <input type="password" id="pin-input" placeholder="••••" maxlength="16">
       <div class="err-pin" id="err-pin">Wrong code — try again.</div>
-      <button class="btn" style="max-width:200px;margin:0 auto;" onclick="checkPin()">Unlock</button>
+      <button class="btn" id="btn-unlock" style="max-width:200px;margin:0 auto;" onclick="checkPin()">Unlock</button>
     </div>
   </div>
 </div>

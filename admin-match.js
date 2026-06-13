@@ -135,28 +135,29 @@ function num(v) {
   const n = Number(v); return Number.isNaN(n) ? null : n;
 }
 
+// Returns null, or { code, reason } describing the first hard-filter conflict.
 function hardFilterGate(fA, fB) {
   fA = fA || {}; fB = fB || {};
   // Want children conflict (engine: No vs Yes either direction)
   if (GATE.wantKids &&
       ((fA.WantKids === 'No' && fB.WantKids === 'Yes') ||
-       (fA.WantKids === 'Yes' && fB.WantKids === 'No'))) return 'Children: one wants kids, the other does not';
+       (fA.WantKids === 'Yes' && fB.WantKids === 'No'))) return { code: 'kids', reason: 'Children: one wants kids, the other does not' };
   // Relationship type mismatch unless one is "Open to both"
   if (GATE.relType && fA.RelType && fB.RelType &&
       fA.RelType !== fB.RelType && fA.RelType !== 'Open to both' && fB.RelType !== 'Open to both')
-    return 'Relationship type mismatch';
+    return { code: 'reltype', reason: 'Relationship type mismatch' };
   // Looking-for vs gender, both directions
   if (GATE.lookingFor && (!lookingAccepts(fA.LookingFor, fB.Gender) || !lookingAccepts(fB.LookingFor, fA.Gender)))
-    return 'Gender / looking-for mismatch';
+    return { code: 'gender', reason: 'Gender / looking-for mismatch' };
   // Relationship-intent hard clash
-  if (GATE.intent && intentClash(fA.Intent, fB.Intent)) return 'Relationship-intent clash (long-term vs casual)';
+  if (GATE.intent && intentClash(fA.Intent, fB.Intent)) return { code: 'intent', reason: 'Relationship-intent clash (long-term vs casual)' };
   // Age range
-  if (GATE.ageRange && ageGate(fA, fB)) return 'Outside preferred age range';
+  if (GATE.ageRange && ageGate(fA, fB)) return { code: 'age', reason: 'Outside preferred age range' };
   // Religion "must share"
   if (GATE.religionMustShare &&
       ((fA.RelImportance === 'Must share' && fA.Religion !== fB.Religion) ||
        (fB.RelImportance === 'Must share' && fB.Religion !== fA.Religion)))
-    return 'Religion: one requires a shared faith';
+    return { code: 'religion', reason: 'Religion: one requires a shared faith' };
   return null;
 }
 
@@ -295,7 +296,9 @@ function matchNarrative(code, A, B, band, nA, nB) {
 /* ── Full bidirectional match (§6) ──────────────────────────────────────────*/
 function matchPair(personA, personB) {
   const A = personA.scores, B = personB.scores;
-  const blocked = hardFilterGate(personA.filters, personB.filters);
+  const gate = hardFilterGate(personA.filters, personB.filters);
+  const blocked = gate ? gate.reason : null;
+  const blockedCode = gate ? gate.code : null;
 
   const pol = polarityMatch(A, B);
   const perDim = {
@@ -316,7 +319,9 @@ function matchPair(personA, personB) {
     const w = ENGINE.weights[d.code];
     wSum += w; wxSum += m * w;
   }
-  const overall = blocked || !wSum ? null : Math.round(wxSum / wSum);
+  // Always compute the underlying score (even when gated) so the admin can still
+  // open a full report. `blocked` just flags it + carries the reason.
+  const overall = !wSum ? null : Math.round(wxSum / wSum);
 
   // Per-dimension report band + dynamic, pairing-specific text
   const dims = DIMENSIONS.map(d => {
@@ -334,8 +339,9 @@ function matchPair(personA, personB) {
   return {
     nameA: personA.name, nameB: personB.name,
     blocked,                       // null or reason string
-    overall,                       // 0–100 or null
-    stars: blocked ? null : starsFor(overall),
+    blockedCode,                   // null or category code (gender/kids/reltype/intent/age/religion)
+    overall,                       // 0–100 or null (computed even when gated)
+    stars: overall === null ? null : starsFor(overall),
     hidden: !blocked && overall !== null && starsFor(overall) === null, // below lowest band
     perDim, dims,
     polarityRows: pol.rows
