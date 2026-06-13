@@ -172,8 +172,10 @@ function starsFor(overall) {
    Generates per-dimension text from the two people's actual styles / types and
    the direction of any gap, rather than three fixed band paragraphs.
    A, B = score objects; nA, nB = display names; band = High/Med/Low.
+   ctx = { polRows } extra context (e.g. the per-axis polarity breakdown).
    ─────────────────────────────────────────────────────────────────────────── */
-function matchNarrative(code, A, B, band, nA, nB) {
+function matchNarrative(code, A, B, band, nA, nB, ctx) {
+  ctx = ctx || {};
   const lower = s => (s || '').toLowerCase();
   const gap = (x, y) => Math.abs((x == null ? 0 : x) - (y == null ? 0 : y));
   const art = w => (/^[aeiou]/i.test(w || '') ? 'an' : 'a'); // a / an
@@ -228,14 +230,35 @@ function matchNarrative(code, A, B, band, nA, nB) {
     }
 
     case 'POL': {
-      if (band === 'High')
-        return { meaning: `What each of you wants in a partner closely matches who the other actually is — the attraction here is well-founded, not just chemistry.`,
-                 tip: 'Name what drew you together, and keep choosing it as the novelty fades.' };
-      if (band === 'Med')
-        return { meaning: `Some of what you each look for lines up with who the other is, with a few real gaps — a fair fit with room to appreciate the differences.`,
-                 tip: 'Treat the differences as range, not as something wrong.' };
-      return { meaning: `There's a gap between what one of you wants and who the other is — attraction may spark, then cool as the differences surface.`,
-               tip: 'Be honest early about whether those differences energise you or drain you.' };
+      // Name the strongest-aligned and weakest (biggest-gap) trait axes.
+      const AX = {
+        Social: 'social energy (how outgoing you each are)',
+        Ambition: 'ambition and drive',
+        Organisation: 'how structured vs spontaneous you each are',
+        Stability: 'emotional evenness under stress',
+        Openness: 'openness to new experiences',
+        Expression: 'how openly you each show feelings',
+        Conflict: 'how directly you each handle conflict'
+      };
+      const rows = (ctx.polRows || []).filter(r => r.name !== 'Overarching');
+      if (rows.length) {
+        const fit = r => (r.aToB + r.bToA) / 2;
+        const sorted = rows.slice().sort((a, b) => fit(a) - fit(b));
+        const weak = AX[sorted[0].name] || lower(sorted[0].name);
+        const strong = AX[sorted[sorted.length - 1].name] || lower(sorted[sorted.length - 1].name);
+        if (band === 'High')
+          return { meaning: `What you each look for and who the other actually is line up well — your strongest pull is around ${strong}. This is well-founded attraction, not just chemistry.`,
+                   tip: `Name what drew you together — your alignment on ${strong} — and keep choosing it as the novelty fades.` };
+        if (band === 'Med')
+          return { meaning: `You're well-matched on ${strong}, but ${weak} is where what one of you is drawn to and who the other is differ most — a workable gap, just worth naming.`,
+                   tip: `Talk specifically about ${weak}: agree where you'll meet in the middle, rather than expecting the other to change.` };
+        return { meaning: `There's a real gap between what one of you is drawn to and who the other is — most of all around ${weak} (you align best on ${strong}). Attraction here can run hot, then cool as that surfaces.`,
+                 tip: `Be honest early about whether the difference in ${weak} energises you or drains you — that's the make-or-break.` };
+      }
+      // Fallback if axis data is missing.
+      if (band === 'High') return { meaning: 'What each of you wants closely matches who the other is — well-founded attraction.', tip: 'Name what drew you together and keep choosing it.' };
+      if (band === 'Med') return { meaning: 'A fair fit between what you want and who the other is, with some real gaps.', tip: 'Treat the differences as range, not as something wrong.' };
+      return { meaning: 'A gap between what one of you wants and who the other is — attraction may spark then cool.', tip: 'Be honest early about whether the differences energise or drain you.' };
     }
 
     case 'INT': {
@@ -261,15 +284,22 @@ function matchNarrative(code, A, B, band, nA, nB) {
 
     case 'DRV': {
       const a = A.drvType, b = B.drvType;
+      const WANT = {
+        Builder: 'building a shared life and reaching goals together',
+        Companion: 'easy everyday companionship — simply being together',
+        Explorer: 'novelty, growth and adventure together',
+        Nurturer: 'deep emotional understanding and being truly known'
+      };
       if (a === b)
-        return { meaning: `You both come to a relationship as ${a}s — at the core you want the same thing from it.`,
-                 tip: 'Set shared goals that honour the mode you both came for.' };
-      const note = band === 'High' ? 'your drives pull in much the same direction'
-                 : band === 'Med' ? 'compatible drives, even if not identical'
-                 : 'you want quite different things from the relationship at its core';
-      return { meaning: `${nA} is ${art(a)} ${a} and ${nB} is ${art(b)} ${b} — ${note}.`,
-               tip: band === 'Low' ? 'Surface it directly — "what is this relationship for?" — rather than assuming you\'ll converge.'
-                                   : `Make room for both modes: ${art(a)} ${a} and ${art(b)} ${b} thrive when each values what the other brings.` };
+        return { meaning: `You both come to a relationship as ${a}s — you're both most fulfilled by ${WANT[a]}.`,
+                 tip: `Lean into it: build shared plans around ${WANT[a]}.` };
+      const note = band === 'High' ? 'different engines, but they pull in much the same direction'
+                 : band === 'Med' ? 'different engines that can complement each other'
+                 : 'you\'re reaching for genuinely different things from the relationship';
+      return { meaning: `${nA} (${a}) is most fulfilled by ${WANT[a]}, while ${nB} (${b}) wants ${WANT[b]} — ${note}.`,
+               tip: band === 'Low'
+                 ? `Ask each other directly: "what is this relationship for?" — ${nA} needs ${WANT[a]}, ${nB} needs ${WANT[b]}, so name how you'll honour both.`
+                 : `Make room for both: give ${nA} the ${a.toLowerCase()} side (${WANT[a]}) and ${nB} the ${b.toLowerCase()} side (${WANT[b]}).` };
     }
 
     case 'LIF': {
@@ -329,7 +359,7 @@ function matchPair(personA, personB) {
     const band = m === null ? null : (m >= ENGINE.matchBands.High ? 'High' : m >= ENGINE.matchBands.Med ? 'Med' : 'Low');
     let txt = { meaning: '', tip: '' };
     if (m !== null) {
-      txt = matchNarrative(d.code, A, B, band, personA.name || 'Partner A', personB.name || 'Partner B');
+      txt = matchNarrative(d.code, A, B, band, personA.name || 'Partner A', personB.name || 'Partner B', { polRows: pol.rows });
       // Safety net: fall back to the band library if a generator returns nothing.
       if (!txt.meaning && typeof MATCH_TEXT !== 'undefined') txt = MATCH_TEXT[`M|${d.code}|${band}`] || txt;
     }
