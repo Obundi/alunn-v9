@@ -37,7 +37,8 @@ const FORMS = {
           "Intimacy",
           "Values",
           "Lifestyle"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 4,
@@ -66,7 +67,8 @@ const FORMS = {
           "Politics",
           "Money",
           "Other"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 7,
@@ -113,7 +115,8 @@ const FORMS = {
       {
         "n": 11,
         "q": "Anything you'd change about the questions or the flow?",
-        "t": "open"
+        "t": "open",
+        "opt": true
       }
     ]
   },
@@ -254,7 +257,8 @@ const FORMS = {
           "Values",
           "Drive",
           "Lifestyle"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 13,
@@ -304,7 +308,8 @@ const FORMS = {
           "€9.99",
           "€14.99",
           "€19.99+"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 18,
@@ -325,7 +330,8 @@ const FORMS = {
           "€9.99/mo",
           "€14.99/mo",
           "€19.99+/mo"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 20,
@@ -344,7 +350,8 @@ const FORMS = {
           "Browse privately (incognito)",
           "Match in other cities (travel mode)",
           "Ad-free experience"
-        ]
+        ],
+        "opt": true
       },
       {
         "section": "Last bit"
@@ -361,12 +368,14 @@ const FORMS = {
           "Finances",
           "Humour/fun",
           "Other"
-        ]
+        ],
+        "opt": true
       },
       {
         "n": 22,
         "q": "Anything else about your profile?",
-        "t": "open"
+        "t": "open",
+        "opt": true
       }
     ]
   },
@@ -518,7 +527,8 @@ const FORMS = {
       {
         "n": 15,
         "q": "Anything to add to or remove from the report?",
-        "t": "open"
+        "t": "open",
+        "opt": true
       }
     ]
   }
@@ -569,7 +579,8 @@ function fbFormInner(form, presetEmail, embedded){
     } else if(q.t==='multi'){
       ctrl=`<div data-multi="${id}">`+(q.o||[]).map(function(o,i){var oid=id+'-m'+i;return `<div class="checkbox-option"><input type="checkbox" id="${oid}" value="${fbEsc(o)}"><label for="${oid}">${fbEsc(o)}</label></div>`;}).join('')+`</div>`;
     }
-    parts.push(`<div class="question-block" data-qid="${id}"><p class="question-text">${q.n}. ${fbEsc(q.q)}</p>${ctrl}</div>`);
+    const optTag = (q.opt || q.t === 'open') ? ' <span class="org">(optional)</span>' : '';
+    parts.push(`<div class="question-block" data-qid="${id}"><p class="question-text">${q.n}. ${fbEsc(q.q)}${optTag}</p>${ctrl}</div>`);
   });
 
   parts.push(`<div class="error-msg" id="fb-err">Please add your email so we can link your feedback.</div>`);
@@ -595,7 +606,32 @@ async function fbSubmit(form, mountEl, opts){
   const btn=mountEl.querySelector('#fb-submit'); const err=mountEl.querySelector('#fb-err');
   const emailEl=mountEl.querySelector('#fb-email');
   const email=(emailEl?emailEl.value:'').trim();
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.classList.add('visible'); emailEl&&emailEl.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+
+  // Clear previous highlights.
+  mountEl.querySelectorAll('.question-block.error').forEach(b => b.classList.remove('error'));
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent='Please add a valid email so we can link your feedback.';
+    err.classList.add('visible'); emailEl&&emailEl.scrollIntoView({behavior:'smooth',block:'center'}); return;
+  }
+
+  // Require every non-optional, non-open question to be answered.
+  const missing=[];
+  form.questions.forEach(q=>{
+    if(q.section||q.t==='email'||q.t==='open'||q.opt) return;
+    const id=`${form.postType}_q${q.n}`;
+    const answered = q.t==='multi'
+      ? !!mountEl.querySelector(`[data-multi="${id}"] input:checked`)
+      : !!mountEl.querySelector(`input[name="${id}"]:checked`);
+    if(!answered) missing.push(id);
+  });
+  if(missing.length){
+    err.textContent='Please answer every question (only the ones marked “optional” can be skipped).';
+    err.classList.add('visible');
+    const first=mountEl.querySelector(`[data-qid="${missing[0]}"]`);
+    if(first){ first.classList.add('error'); first.scrollIntoView({behavior:'smooth',block:'center'}); }
+    return;
+  }
   err.classList.remove('visible');
 
   const payload={type:form.postType, email};
