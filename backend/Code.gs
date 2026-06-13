@@ -1,17 +1,20 @@
 /* =============================================================================
-   Alunn v9 — Google Apps Script backend (NEW v9 deployment)
-   Bind this to a NEW Google Sheet, then Deploy → New deployment → Web app
+   Alunn v9 - Google Apps Script backend (NEW v9 deployment)
+   Bind this to a NEW Google Sheet, then Deploy -> New deployment -> Web app
    (Execute as: Me; Who has access: Anyone). Paste the /exec URL into config.js.
 
    Storage model (matches the spec): one sheet per submission type. Each row is
    raw answers keyed by field code; columns are added automatically as new keys
-   appear, so headers mirror the engine's ① INPUT field codes exactly and the
+   appear, so headers mirror the engine's 1 INPUT field codes exactly and the
    client-side scorer reads them by name.
 
    IMPORTANT: set ADMIN_TOKEN below to the SAME value as ADMIN_PIN in config.js.
    ============================================================================= */
 
 var ADMIN_TOKEN = 'CHANGE-ME-v9';   // must equal ADMIN_PIN in config.js
+
+// Get an email every time someone submits. Leave '' to switch notifications off.
+var OWNER_EMAIL = 'obiberg@hotmail.com';
 
 var SHEETS = {
   questionnaire: 'Responses',
@@ -26,10 +29,38 @@ function doPost(e) {
     var type = body.type || 'questionnaire';
     var sheetName = SHEETS[type] || 'Misc';
     appendObject(sheetName, body);
+    notify(type, body);
     return json({ ok: true });
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
+}
+
+// Email the owner when a submission arrives. Never lets an email error break the save.
+function notify(type, body) {
+  if (!OWNER_EMAIL || OWNER_EMAIL.indexOf('YOUR_EMAIL_HERE') === 0) return;
+  try {
+    var labels = {
+      questionnaire: 'assessment completed',
+      fb_assessment: 'feedback - assessment experience',
+      fb_profile:    'feedback - profile accuracy',
+      fb_match:      'feedback - couple match report'
+    };
+    var what = labels[type] || type;
+    var who = (body.name ? body.name + ' - ' : '') + (body.email || 'no email');
+    var subject = 'Alunn - ' + what + ' (' + who + ')';
+    var sheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    var lines = [
+      'New submission on Alunn.',
+      '',
+      'Type: ' + what,
+      'From: ' + who,
+      'Time: ' + new Date().toString(),
+      '',
+      'Open the sheet: ' + sheetUrl
+    ];
+    MailApp.sendEmail(OWNER_EMAIL, subject, lines.join('\n'));
+  } catch (err) { /* notification failure must never block the save */ }
 }
 
 function doGet(e) {
@@ -50,7 +81,7 @@ function doGet(e) {
   return json({ ok: true, info: 'Alunn v9 backend' });
 }
 
-/* ── helpers ──────────────────────────────────────────────────────────────── */
+/* helpers */
 
 function appendObject(sheetName, obj) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -109,4 +140,10 @@ function findEmail(list, email) {
 
 function json(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Run this ONCE from the editor (select testNotify -> Run) to grant email
+// permission and confirm a test message arrives in your inbox.
+function testNotify() {
+  notify('questionnaire', { name: 'Test', email: 'test@example.com' });
 }

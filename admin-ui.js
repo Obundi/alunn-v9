@@ -52,7 +52,11 @@ function findByEmail(people, email) {
   return people.find(p => (p.email || '').trim().toLowerCase() === e);
 }
 
-/* ── Tab 1: top matches ─────────────────────────────────────────────────────*/
+/* ── Tab 1: top matches (filterable list) ───────────────────────────────────*/
+let TOP = null;            // { target, rows: [{person, result}] }
+let topShown = 25;
+const TOP_PAGE = 25;
+
 async function findTopMatches() {
   const email = document.getElementById('top-email').value.trim();
   const err = document.getElementById('err-top');
@@ -64,42 +68,122 @@ async function findTopMatches() {
     const people = await loadAllPeople();
     const target = findByEmail(people, email);
     if (!target) { err.textContent = 'No submission found for that email.'; err.classList.add('visible'); return; }
-    const showGated = document.getElementById('show-gated').checked;
-    renderTopMatches(target, people, showGated);
+    TOP = { target, rows: people.filter(p => p !== target).map(p => ({ person: p, result: matchPair(target, p) })) };
+    topShown = TOP_PAGE;
+    renderTopBar();
+    applyTopFilters();
   } catch (e) {
     err.textContent = 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
   } finally { spin.style.display = 'none'; }
 }
 
-function renderTopMatches(target, people, showGated) {
+// star label → minimum overall score (read from the engine config)
+function starMin(label) { const b = ENGINE.starBands.find(x => x.stars === label); return b ? b.min : 0; }
+
+// submission time (ms) for a candidate, or null
+function tsOf(person) {
+  const t = person.raw && person.raw.timestamp;
+  if (!t) return null;
+  const d = new Date(t);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+function renderTopBar() {
   const el = document.getElementById('top-result');
-  let rows;
-  if (showGated) {
-    rows = people.filter(p => p !== target)
-      .map(p => ({ person: p, result: matchPair(target, p) }))
-      .sort((a, b) => (b.result.overall || -1) - (a.result.overall || -1));
-  } else {
-    rows = rankMatches(target, people);
-  }
-  if (!rows.length) { el.innerHTML = `<p class="report-note">No eligible matches found.</p>`; return; }
-  const cards = rows.map((r, i) => {
+  const cities = [...new Set(TOP.rows.map(r => (r.person.filters.City || '').trim()).filter(Boolean))].sort();
+  const cityOpts = ['<option value="">Any city</option>'].concat(cities.map(c => `<option>${escA(c)}</option>`)).join('');
+  el.innerHTML = `
+    <div class="result-header">Matches for ${escA(TOP.target.name)}</div>
+    <div class="top-filters">
+      <div class="field"><label>Search</label><input type="text" id="tf-search" placeholder="name or email"></div>
+      <div class="field"><label>Min stars</label><select id="tf-stars">
+        <option value="0">Any</option>
+        <option value="${starMin('★★★')}">★★★+</option>
+        <option value="${starMin('★★★½')}">★★★½+</option>
+        <option value="${starMin('★★★★')}">★★★★+</option>
+        <option value="${starMin('★★★★★')}">★★★★★</option>
+      </select></div>
+      <div class="field"><label>City</label><select id="tf-city">${cityOpts}</select></div>
+      <div class="field"><label>Joined</label><select id="tf-when">
+        <option value="0">Any time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option>
+      </select></div>
+      <div class="field"><label>Sort by</label><select id="tf-sort">
+        <option value="best">Best match</option><option value="new">Newest</option><option value="age">Closest age</option>
+      </select></div>
+      <div class="field"><label>&nbsp;</label><label class="checkbox-option" style="margin:0;"><input type="checkbox" id="tf-gated"><label for="tf-gated">Show gated/low</label></label></div>
+    </div>
+    <div id="top-count" class="top-count"></div>
+    <div id="top-list"></div>
+    <div id="top-more" style="margin-top:12px;"></div>`;
+  ['tf-search', 'tf-stars', 'tf-city', 'tf-when', 'tf-sort', 'tf-gated'].forEach(id => {
+    const node = document.getElementById(id);
+    node.addEventListener(id === 'tf-search' ? 'input' : 'change', () => { topShown = TOP_PAGE; applyTopFilters(); });
+  });
+}
+
+function applyTopFilters() {
+  const q = (document.getElementById('tf-search').value || '').trim().toLowerCase();
+  const minScore = Number(document.getElementById('tf-stars').value) || 0;
+  const city = document.getElementById('tf-city').value;
+  const days = Number(document.getElementById('tf-when').value) || 0;
+  const sort = document.getElementById('tf-sort').value;
+  const gated = document.getElementById('tf-gated').checked;
+  const cutoff = days ? Date.now() - days * 86400000 : 0;
+  const tAge = Number(TOP.target.filters.Age);
+
+  let rows = TOP.rows.filter(r => {
     const res = r.result, p = r.person;
-    const blocked = res.blocked || res.hidden;
-    const right = blocked
-      ? `<span class="hf-badge-fail" title="${escA(res.blocked || 'Below display threshold')}">${res.blocked ? 'Gated' : 'Low'}</span>`
-      : `<span class="top-match-stars">${res.stars}</span><span class="top-match-rank" style="width:auto;color:var(--forest);font-size:1rem;">${res.overall}</span>`;
-    return `
-      <div class="top-match-card">
-        <span class="top-match-rank">${blocked ? '–' : i + 1}</span>
-        <div class="top-match-info">
-          <div class="top-match-name">${escA(p.name)}</div>
-          <div class="top-match-types">${escA(p.scores.attStyle || '?')} · ${escA(p.scores.comStyle || '?')} · ${escA(p.scores.drvType || '?')}</div>
-        </div>
-        ${right}
-        <button class="top-match-btn" onclick="loadMatchFromTop('${escA(target.email)}','${escA(p.email)}')">Report</button>
-      </div>`;
-  }).join('');
-  el.innerHTML = `<div class="result-header">Matches for ${escA(target.name)}</div>${cards}`;
+    const eligible = !res.blocked && !res.hidden && res.overall !== null;
+    if (!gated && !eligible) return false;
+    if (minScore && (res.overall === null || res.overall < minScore)) return false;
+    if (city && (p.filters.City || '').trim() !== city) return false;
+    if (cutoff) { const ts = tsOf(p); if (ts === null || ts < cutoff) return false; }
+    if (q && (((p.name || '') + ' ' + (p.email || '')).toLowerCase().indexOf(q) === -1)) return false;
+    return true;
+  });
+
+  rows.sort((a, b) => {
+    if (sort === 'new') return (tsOf(b.person) || 0) - (tsOf(a.person) || 0);
+    if (sort === 'age') {
+      const da = Math.abs((Number(a.person.filters.Age) || 999) - (tAge || 0));
+      const db = Math.abs((Number(b.person.filters.Age) || 999) - (tAge || 0));
+      return da - db;
+    }
+    return (b.result.overall == null ? -1 : b.result.overall) - (a.result.overall == null ? -1 : a.result.overall);
+  });
+
+  const total = rows.length;
+  const shown = rows.slice(0, topShown);
+  document.getElementById('top-count').textContent = total ? `Showing ${shown.length} of ${total}` : 'No matches with these filters.';
+  document.getElementById('top-list').innerHTML = shown.map((r, i) => topCard(r, i)).join('');
+  const more = document.getElementById('top-more');
+  if (total > shown.length) {
+    more.innerHTML = `<button class="btn btn-secondary" id="tf-more">Load more (${total - shown.length} more)</button>`;
+    document.getElementById('tf-more').addEventListener('click', () => { topShown += TOP_PAGE; applyTopFilters(); });
+  } else { more.innerHTML = ''; }
+}
+
+function topCard(r, i) {
+  const res = r.result, p = r.person;
+  const blocked = res.blocked || res.hidden;
+  const right = blocked
+    ? `<span class="hf-badge-fail" title="${escA(res.blocked || 'Below display threshold')}">${res.blocked ? 'Gated' : 'Low'}</span>`
+    : `<span class="top-match-stars">${res.stars}</span><span class="top-match-rank" style="width:auto;color:var(--forest);font-size:1rem;">${res.overall}</span>`;
+  const city = (p.filters.City || '').trim();
+  const age = (p.filters.Age || '').toString().trim();
+  const styles = [p.scores.attStyle, p.scores.comStyle, p.scores.drvType].filter(Boolean).join(' · ');
+  const place = [city, age ? age + 'y' : ''].filter(Boolean).join(', ');
+  const sub = [styles, place].filter(Boolean).join('  ·  ');
+  return `
+    <div class="top-match-card">
+      <span class="top-match-rank">${blocked ? '–' : i + 1}</span>
+      <div class="top-match-info">
+        <div class="top-match-name">${escA(p.name)}</div>
+        <div class="top-match-types">${escA(sub)}</div>
+      </div>
+      ${right}
+      <button class="top-match-btn" onclick="loadMatchFromTop('${escA(TOP.target.email)}','${escA(p.email)}')">Report</button>
+    </div>`;
 }
 
 function loadMatchFromTop(emailA, emailB) {

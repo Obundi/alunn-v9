@@ -32,6 +32,10 @@
     #pin-input:focus { border-color:var(--forest); }
     .err-pin { color:#c0392b; font-size:0.9rem; margin-top:8px; display:none; }
     .result-header { font-family:Georgia,serif; font-size:1rem; font-weight:700; color:var(--forest); margin:24px 0 14px; }
+    .top-filters { display:flex; flex-wrap:wrap; gap:10px 12px; margin:6px 0 14px; align-items:flex-end; }
+    .top-filters .field { margin-bottom:0; flex:1; min-width:120px; }
+    .top-filters .field label { margin-bottom:4px; }
+    .top-count { font-size:0.82rem; color:var(--mid); margin-bottom:10px; }
 
     /* When saving a generated report as PDF, print only the report — not the
        admin chrome — so it's identical to the user-facing profile PDF. */
@@ -77,11 +81,9 @@
     </div>
 
     <div id="tab-top" class="tab-panel active">
-      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Enter a person's email to rank everyone else by compatibility (stars). Gated-out and below-threshold matches are hidden.</div></div>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Enter a person's email to rank everyone else by compatibility, then filter and sort the list below. Incompatible people (hard-filter conflicts) and below-threshold matches are hidden unless you tick "Show gated/low".</div></div>
       <div class="field"><label for="top-email">Person — email</label>
         <input type="email" id="top-email" placeholder="person@example.com"></div>
-      <div class="checkbox-option" style="margin:8px 0 14px;">
-        <input type="checkbox" id="show-gated"><label for="show-gated">Also show gated-out / below-threshold (for debugging)</label></div>
       <div class="error-msg" id="err-top"></div>
       <button class="btn" id="btn-top" onclick="findTopMatches()">Find top matches <span class="spinner" id="top-spinner" style="display:none;"></span></button>
       <div id="top-result"></div>
