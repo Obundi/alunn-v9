@@ -49,11 +49,15 @@
     /* When saving a generated report as PDF, print only the report — not the
        admin chrome — so it's identical to the user-facing profile PDF. */
     @media print {
+      /* The shared stylesheet hides all .screen elements in print; the admin
+         content lives in #admin-screen (a .screen), so force it visible. */
+      #admin-screen { display:block !important; }
       #lock-screen { display:none !important; }
       #admin-screen > .card > .logo-wrap,
       #admin-screen > .card > h2,
       .admin-tabs { display:none !important; }
       .tab-panel:not(.active) { display:none !important; }
+      .top-filters, .top-gatefilters, .top-count { display:none !important; }
       .tab-panel > .field,
       .tab-panel > .btn,
       .tab-panel > .checkbox-option,

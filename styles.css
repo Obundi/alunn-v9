@@ -682,6 +682,8 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 
 /* ── Print / PDF ── */
 @media print {
+  /* Print background colours / white text on the coloured report cards. */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { background: white; padding: 0; }
   #progress-bar-wrap, .btn, .step-counter, .screen-intro-text, .report-note { display: none !important; }
   .card { box-shadow: none; border: none; margin-top: 0; padding: 20px 0; max-width: 100%; }
