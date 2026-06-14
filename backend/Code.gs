@@ -28,8 +28,8 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     var type = body.type || 'questionnaire';
     var sheetName = SHEETS[type] || 'Misc';
-    appendObject(sheetName, body);
-    notify(type, body);
+    var added = appendObject(sheetName, body);
+    if (added) notify(type, body);   // only email on a genuinely new row, not retries
     return json({ ok: true });
   } catch (err) {
     return json({ ok: false, error: String(err) });
@@ -83,6 +83,7 @@ function doGet(e) {
 
 /* helpers */
 
+// Returns true if a new row was added, false if it was a duplicate (already saved).
 function appendObject(sheetName, obj) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
@@ -94,6 +95,16 @@ function appendObject(sheetName, obj) {
     if (!headers.length || (headers.length === 1 && headers[0] === '')) {
       headers = ['timestamp'];
       sheet.getRange(1, 1, 1, 1).setValues([headers]);
+    }
+    // Idempotency: if this submissionId is already stored, skip (safe retries).
+    if (obj.submissionId) {
+      var idCol = headers.indexOf('submissionId');
+      if (idCol !== -1 && sheet.getLastRow() > 1) {
+        var ids = sheet.getRange(2, idCol + 1, sheet.getLastRow() - 1, 1).getValues();
+        for (var r = 0; r < ids.length; r++) {
+          if (String(ids[r][0]) === String(obj.submissionId)) return false; // already saved
+        }
+      }
     }
     // Add any new keys as columns.
     var keys = Object.keys(obj);
@@ -108,6 +119,7 @@ function appendObject(sheetName, obj) {
       return obj[h] !== undefined ? obj[h] : '';
     });
     sheet.appendRow(row);
+    return true;
   } finally {
     lock.releaseLock();
   }

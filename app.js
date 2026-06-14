@@ -154,6 +154,7 @@ function init() {
 
   wireEvents();
   showScreen(0);
+  flushPending(); // retry a previous visit's save if it never confirmed
 }
 
 function buildQScreen(app, group, stepNum) {
@@ -242,7 +243,7 @@ function enterAssessFeedback() {
       embedded: true,
       presetEmail: state.email,
       submitLabel: 'Send & reveal my profile',
-      onSubmitted: revealProfile
+      onSubmitted: () => { ensureSubmitted(); revealProfile(); } // re-save as a safety net
     });
   }
   showScreen(assessIdx);
@@ -283,23 +284,56 @@ function collectAndValidateSetup() {
   showScreen(2);
 }
 
-/* ── save the questionnaire (fire-and-forget, once) ─────────────────────────*/
+/* ── Reliable questionnaire save ─────────────────────────────────────────────
+   • Confirmed: reads the server's {ok:true} reply, so we KNOW it saved.
+   • Idempotent: each submission carries a submissionId; the backend skips
+     duplicates, so retries never create double rows.
+   • Durable: the pending submission is held in localStorage until confirmed,
+     and retried automatically on the next visit if it didn't go through.
+   ─────────────────────────────────────────────────────────────────────────── */
+const PENDING_KEY = 'alunn_v9_pending';
 let submitted = false;
-function ensureSubmitted() {
+let currentSid = null;
+
+function newSubmissionId() { return 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// POST and read the server's confirmation. true only if the server said ok.
+async function postConfirmed(payload) {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    return !!(data && data.ok);
+  } catch (e) { return false; } // network error or unreadable reply → retry (safe, idempotent)
+}
+
+// Try to send whatever is queued in localStorage; clears it once confirmed.
+async function flushPending() {
+  let raw; try { raw = localStorage.getItem(PENDING_KEY); } catch (e) { return false; }
+  if (!raw) return false;
+  let payload; try { payload = JSON.parse(raw); } catch (e) { try { localStorage.removeItem(PENDING_KEY); } catch (_) {} return false; }
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    if (await postConfirmed(payload)) { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} return true; }
+    await sleep(800 * attempt);
+  }
+  return false; // leave it queued for the next visit
+}
+
+async function ensureSubmitted() {
   if (submitted) return;
-  submitted = true;
+  if (!currentSid) currentSid = newSubmissionId();
   const payload = {
     type: 'questionnaire',
     name: state.name, email: state.email,
     consent: state.consent ? 'yes' : 'no', consentAt: state.consentAt || '',
+    submissionId: currentSid,
     ...state.answers
   };
-  try {
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload), mode: 'no-cors'
-    });
-  } catch (e) { /* no-cors may throw; ignore */ }
+  try { localStorage.setItem(PENDING_KEY, JSON.stringify(payload)); } catch (e) {}
+  if (await flushPending()) submitted = true;
 }
 
 function renderProfile(report) {
