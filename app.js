@@ -102,7 +102,7 @@ function init() {
     <h1>Meant to align</h1>
     <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Alunn is a personality-first dating concept — instead of judging on photos, it matches people on what actually keeps relationships together: how you attach, communicate, handle closeness and what you want from love.<br><br>Answer <strong>20 quick questions</strong> (about 5 minutes) and you'll instantly get your own <strong>psychological compatibility profile</strong>. It's free, and this is an early beta, so your honest reactions genuinely shape what Alunn becomes.</div></div>
     <div class="section-divider">Let's start with you</div>
-    <div class="field"><label>First name <span class="org">(optional)</span></label>
+    <div class="field"><label>First name <span class="req">*</span></label>
       <input type="text" id="input-name" placeholder="Your first name" autocomplete="given-name" value="${escHtml(state.name)}"></div>
     <div class="field"><label>Email <span class="req">*</span></label>
       <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email" value="${escHtml(state.email)}">
@@ -112,7 +112,7 @@ function init() {
       <label for="input-consent"><strong>I give my explicit consent.</strong>
         This assessment asks about sensitive things — your sexual orientation, religion, political leaning, intimacy and personality. I explicitly consent to Alunn processing these special categories of personal data (GDPR Article&nbsp;9) solely to generate my compatibility profile and matches. I can withdraw consent and ask for my data to be deleted at any time.</label>
     </div>
-    <div class="error-msg" id="err-you">Please enter a valid email and tick the consent box to continue.</div>
+    <div class="error-msg" id="err-you">Please enter your first name, a valid email, and tick the consent box to continue.</div>
     <button class="btn" id="btn-you-next">Start the assessment</button>`;
   app.appendChild(intro); screens.push(intro);
 
@@ -179,16 +179,18 @@ function buildQScreen(app, group, stepNum) {
 function wireEvents() {
   // Welcome page → consent gate
   document.getElementById('btn-you-next').addEventListener('click', () => {
+    const name = document.getElementById('input-name').value.trim();
     const email = document.getElementById('input-email').value.trim();
     const consent = document.getElementById('input-consent').checked;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!emailOk || !consent) {
+    if (!name || !emailOk || !consent) {
       document.getElementById('err-you').classList.add('visible');
-      document.getElementById(emailOk ? 'input-consent' : 'input-email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const focusId = !name ? 'input-name' : (!emailOk ? 'input-email' : 'input-consent');
+      document.getElementById(focusId).scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     document.getElementById('err-you').classList.remove('visible');
-    state.name = document.getElementById('input-name').value.trim();
+    state.name = name;
     state.email = email;
     state.consent = true;
     state.consentAt = new Date().toISOString();

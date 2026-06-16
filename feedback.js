@@ -392,7 +392,6 @@ const FORMS = {
       {
         "q": "Your partner's first name",
         "t": "text",
-        "opt": true,
         "field": "partnerName"
       },
       {
@@ -576,7 +575,7 @@ function fbFormInner(form, presetEmail, embedded){
     if(q.t==='email'){
       ctrl=`<input type="email" name="${id}" id="fb-email" value="${fbEsc(presetEmail)}" placeholder="you@example.com">`;
     } else if(q.t==='text'){
-      ctrl=`<input type="text" name="${id}" placeholder="Optional">`;
+      ctrl=`<input type="text" name="${id}" placeholder="Their first name">`;
     } else if(q.t==='open'){
       ctrl=`<textarea name="${id}" rows="3" placeholder="Optional"></textarea>`;
     } else if(q.t==='scale'){
@@ -627,11 +626,12 @@ async function fbSubmit(form, mountEl, opts){
   // Require every non-optional, non-open question to be answered.
   const missing=[];
   form.questions.forEach(q=>{
-    if(q.section||q.t==='email'||q.t==='open'||q.t==='text'||q.opt) return;
+    if(q.section||q.t==='email'||q.t==='open'||q.opt) return;
     const id=q.field || `${form.postType}_q${q.n}`;
-    const answered = q.t==='multi'
-      ? !!mountEl.querySelector(`[data-multi="${id}"] input:checked`)
-      : !!mountEl.querySelector(`input[name="${id}"]:checked`);
+    let answered;
+    if(q.t==='multi') answered = !!mountEl.querySelector(`[data-multi="${id}"] input:checked`);
+    else if(q.t==='text'){ const el=mountEl.querySelector(`[name="${id}"]`); answered = !!(el && el.value.trim()); }
+    else answered = !!mountEl.querySelector(`input[name="${id}"]:checked`);
     if(!answered) missing.push(id);
   });
   if(missing.length){

@@ -50,6 +50,19 @@ function switchTab(id) {
 
 function escA(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+// Anonymous, deterministic couple code from the two emails (order-independent).
+// Same couple → same code; reveals nothing about who they are.
+function pairToken(a, b) {
+  const s = [a, b].map(e => String(e || '').trim().toLowerCase()).sort().join('|');
+  let h1 = 0x811c9dc5, h2 = 0x1000193;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = (h1 ^ c) * 0x01000193 >>> 0;
+    h2 = (h2 * 31 + c) >>> 0;
+  }
+  return 'p' + h1.toString(36) + h2.toString(36);
+}
+
 // Turn a raw sheet record into a person object the engine understands.
 const FILTER_FIELDS = ['Gender','Orientation','LookingFor','Intent','RelType','WantKids','Age','AgeMin','AgeMax','City','HasKids','OpenToKids','Religion','RelImportance'];
 function toPerson(raw) {
@@ -281,12 +294,13 @@ function renderMatchReport(m, emailA, emailB) {
 
   // Shared pair code for couple feedback (sorted emails). Both partners' links
   // carry the same code, so their feedback rows line up for comparison.
-  const pairKey = [emailA, emailB].map(e => String(e || '').trim().toLowerCase()).filter(Boolean).sort().join(' + ');
+  // Anonymous, deterministic pairing code — reveals no names/emails in the link.
+  const pairKey = pairToken(emailA, emailB);
   const coupleLink = new URL(`fb-match.html?pair=${encodeURIComponent(pairKey)}`, location.href).href;
   const linksBlock = (emailA && emailB) ? `
     <div class="report-section match-fb-links">
       <div class="report-section-label">Couple feedback link</div>
-      <p class="report-body">One link for this couple — send it to either partner; they can use it and forward it to the other. Each just enters their own email, and both answers auto-pair so you can compare their views on this report. A wrong or shared link never breaks anything — at worst a response just won't pair.</p>
+      <p class="report-body">One link for this couple — send it to either partner; they can use it and forward it to the other. The link is an <strong>anonymous code</strong> (no names or emails in it), so a wrong or forwarded link never exposes anyone. Each person just enters their own email, and both answers auto-pair so you can compare their views on this report.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-secondary" style="flex:1;min-width:200px;" onclick="copyFbLink(this,'${escA(coupleLink)}')">Copy couple feedback link</button>
       </div>
