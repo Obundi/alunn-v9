@@ -1,0 +1,27 @@
+Field code	Question	Answer options & meaning
+timestamp	When submitted	auto
+email	Respondent email	free text
+fb_profile_q1	1. Overall, my profile describes me accurately.	1–5 (Strongly disagree → Strongly agree)
+fb_profile_q2	2. Accuracy — Attachment style	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q3	3. Accuracy — Communication style	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q4	4. Accuracy — Attraction (what draws you to a partner)	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q5	5. Accuracy — Intimacy needs	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q6	6. Accuracy — Values	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q7	7. Accuracy — Relationship drive / goals	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q8	8. Accuracy — Lifestyle	Spot on / Mostly / Mixed / Off / Way off
+fb_profile_q9	9. My main result (e.g. your attachment style / drive type) felt…	Spot on / Mostly right / Not really / Wrong
+fb_profile_q10	10. Did the profile tell you anything insightful about yourself?	Yes, genuinely / A little / Not really
+fb_profile_q11	11. Was anything clearly wrong?	No / Minor details / Yes, something important
+fb_profile_q12	12. If something was wrong, which part?	Attachment · Communication · Attraction · Intimacy · Values · Drive · Lifestyle   [multi — joined by |]   (optional)
+fb_profile_q13	13. The report length / readability was…	Too short / Just right / A bit long / Too much text
+fb_profile_q14	14. I'd trust this to give me better matches than a normal app.	1–5 (Strongly disagree → Strongly agree)
+  (Premium & pricing)		
+fb_profile_q15	15. This beta uses a starter question set. Would you answer more questions to unlock a deeper, more accurate profile?	Yes, gladly / Maybe / No
+fb_profile_q16	16. Would you pay a one-off fee for a personal report like this?	No / Maybe / Yes
+fb_profile_q17	17. If yes, what one-off price feels fair?	€4.99 / €9.99 / €14.99 / €19.99+   (optional)
+fb_profile_q18	18. Would you subscribe to a premium Alunn account — unlock more assessments to deepen your profile and improve your match quality?	No / Maybe / Yes
+fb_profile_q19	19. If yes, what monthly price feels fair?	€4.99/mo / €9.99/mo / €14.99/mo / €19.99+/mo   (optional)
+fb_profile_q20	20. Which premium features would make it worth paying for?	A deeper, more accurate profile (more questions) · See who's compatible with you before matching · See who already likes you · Advanced match filters (values, lifestyle, etc.) · Unlimited matches & messaging · Full compatibility breakdown for every match · Relationship coaching & tips · Profile boost / more visibility · Undo / rewind a pass · Browse privately (incognito) · Match in other cities (travel mode) · Ad-free experience   [multi — joined by |]   (optional)
+  (Last bit)		
+fb_profile_q21	21. Anything you wish your profile had covered?	Sex/intimacy · Conflict style · Future goals · Family · Finances · Humour/fun · Other   [multi — joined by |]   (optional)
+fb_profile_q22	22. Anything else about your profile?	free text   (optional)

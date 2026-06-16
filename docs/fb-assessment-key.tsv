@@ -1,0 +1,14 @@
+Field code	Question	Answer options & meaning
+timestamp	When submitted	auto
+email	Respondent email	free text
+fb_assessment_q1	1. How long did the assessment feel?	Too short / Just right / A bit long / Too long
+fb_assessment_q2	2. Did you think about giving up before finishing?	No / Once / A few times / I nearly did
+fb_assessment_q3	3. If it felt long, which parts dragged?	Attachment · Communication · Drive/goals · Intimacy · Values · Lifestyle   [multi — joined by |]   (optional)
+fb_assessment_q4	4. The questions were clear and easy to understand.	1–5 (Strongly disagree → Strongly agree)
+fb_assessment_q5	5. Did any questions feel too personal or uncomfortable?	Not at all / A little / Quite / Very
+fb_assessment_q6	6. If so, which topics?	Intimacy/sex · Religion/values · Attachment/past · Politics · Money · Other   [multi — joined by |]   (optional)
+fb_assessment_q7	7. The questions felt relevant to finding a compatible partner.	1–5 (Strongly disagree → Strongly agree)
+fb_assessment_q8	8. Compared to signing up for other dating apps, this felt…	Much worse / Worse / About the same / Better / Much better
+fb_assessment_q9	9. How many up-front questions feels acceptable to you?	Under 10 / About 10 / About 20 / About 30 / As many as it takes
+fb_assessment_q10	10. Overall the assessment made me feel…	Curious · Excited · Seen/understood · Neutral · Tired · Skeptical   [multi — joined by |]
+fb_assessment_q11	11. Anything you'd change about the questions or the flow?	free text   (optional)
