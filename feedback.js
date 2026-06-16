@@ -662,16 +662,39 @@ async function fbSubmit(form, mountEl, opts){
   });
 
   btn.disabled=true; btn.innerHTML='<span class="btn-spinner"></span> Sending…';
-  try{
-    await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
-  }catch(e){}
+  payload.submissionId = 'fb_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  const ok = await fbPostConfirmed(payload);
 
+  // Embedded in the assessment flow: never block the profile reveal on a
+  // feedback hiccup (we already retried). Proceed regardless.
   if(typeof opts.onSubmitted === 'function'){ opts.onSubmitted(); return; }
+
+  if(!ok){
+    btn.disabled=false; btn.innerHTML = opts.submitLabel || 'Submit feedback';
+    err.textContent='Couldn’t reach the server — please check your connection and tap Submit again.';
+    err.classList.add('visible');
+    err.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   mountEl.innerHTML=`<div class="screen active"><div class="card" style="text-align:center;">
     <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
     <div class="thankyou-icon">✓</div><h2>Thank you</h2>
     <p class="screen-intro-text">Your feedback is in — this genuinely shapes how Alunn develops.</p></div></div>`;
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Confirmed, retrying feedback POST. Reads the server's {ok:true}; idempotent
+// (submissionId) so retries never duplicate. Returns true only when confirmed.
+async function fbPostConfirmed(payload){
+  for(let i=1;i<=4;i++){
+    try{
+      const res=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      const data=await res.json();
+      if(data && data.ok) return true;
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,700*i));
+  }
+  return false;
 }
 
 // Standalone page mode: fb-*.html sets window.FORM_ID and has a #fb-app container.
