@@ -1,5 +1,8 @@
 Field code	Question	Answer options & meaning
+email	Respondent's own email	free text
+pairKey	Couple pairing code (both partners' links share it)	group by this to compare the two partners
 email	1. Your email (to link with your assessment — kept private)	free text (stored in the "email" column)
+partnerName	Your partner's first name	free text   (optional)
 fb_match_q2	2. Overall, the report described us accurately.	1–5 (Strongly disagree → Strongly agree)
 fb_match_q3	3. Accuracy — Attachment section	Spot on / Mostly / Mixed / Off / Way off
 fb_match_q4	4. Accuracy — Communication section	Spot on / Mostly / Mixed / Off / Way off
@@ -13,4 +16,4 @@ fb_match_q11	11. Did the report change how you see your dynamic?	Yes, new insigh
 fb_match_q12	12. Report length / readability	Too little / Just right / A bit long / Too much text
 fb_match_q13	13. It would be useful (e.g. as a conversation starter).	1–5 (Strongly disagree → Strongly agree)
 fb_match_q14	14. Would you recommend Alunn to a friend?	No / Maybe / Yes, definitely
-fb_match_q15	15. Anything to add to or remove from the report?	free text
+fb_match_q15	15. Anything to add to or remove from the report?	free text   (optional)

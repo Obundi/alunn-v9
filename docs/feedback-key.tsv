@@ -3,15 +3,15 @@ email	(all 3 forms)	Respondent email (links to their assessment)	free text
 —— FB_Assessment — assessment experience ——			
 fb_assessment_q1	fb_assessment	1. How long did the assessment feel?	Too short / Just right / A bit long / Too long
 fb_assessment_q2	fb_assessment	2. Did you think about giving up before finishing?	No / Once / A few times / I nearly did
-fb_assessment_q3	fb_assessment	3. If it felt long, which parts dragged?	Attachment · Communication · Drive/goals · Intimacy · Values · Lifestyle   [multi — joined by |]
+fb_assessment_q3	fb_assessment	3. If it felt long, which parts dragged?	Attachment · Communication · Drive/goals · Intimacy · Values · Lifestyle   [multi — joined by |]   (optional)
 fb_assessment_q4	fb_assessment	4. The questions were clear and easy to understand.	1–5 (Strongly disagree → Strongly agree)
 fb_assessment_q5	fb_assessment	5. Did any questions feel too personal or uncomfortable?	Not at all / A little / Quite / Very
-fb_assessment_q6	fb_assessment	6. If so, which topics?	Intimacy/sex · Religion/values · Attachment/past · Politics · Money · Other   [multi — joined by |]
+fb_assessment_q6	fb_assessment	6. If so, which topics?	Intimacy/sex · Religion/values · Attachment/past · Politics · Money · Other   [multi — joined by |]   (optional)
 fb_assessment_q7	fb_assessment	7. The questions felt relevant to finding a compatible partner.	1–5 (Strongly disagree → Strongly agree)
 fb_assessment_q8	fb_assessment	8. Compared to signing up for other dating apps, this felt…	Much worse / Worse / About the same / Better / Much better
 fb_assessment_q9	fb_assessment	9. How many up-front questions feels acceptable to you?	Under 10 / About 10 / About 20 / About 30 / As many as it takes
 fb_assessment_q10	fb_assessment	10. Overall the assessment made me feel…	Curious · Excited · Seen/understood · Neutral · Tired · Skeptical   [multi — joined by |]
-fb_assessment_q11	fb_assessment	11. Anything you'd change about the questions or the flow?	free text
+fb_assessment_q11	fb_assessment	11. Anything you'd change about the questions or the flow?	free text   (optional)
 —— FB_Profile — profile accuracy ——			
 fb_profile_q1	fb_profile	1. Overall, my profile describes me accurately.	1–5 (Strongly disagree → Strongly agree)
 fb_profile_q2	fb_profile	2. Accuracy — Attachment style	Spot on / Mostly / Mixed / Off / Way off
@@ -24,21 +24,23 @@ fb_profile_q8	fb_profile	8. Accuracy — Lifestyle	Spot on / Mostly / Mixed / Of
 fb_profile_q9	fb_profile	9. My main result (e.g. your attachment style / drive type) felt…	Spot on / Mostly right / Not really / Wrong
 fb_profile_q10	fb_profile	10. Did the profile tell you anything insightful about yourself?	Yes, genuinely / A little / Not really
 fb_profile_q11	fb_profile	11. Was anything clearly wrong?	No / Minor details / Yes, something important
-fb_profile_q12	fb_profile	12. If something was wrong, which part?	Attachment · Communication · Attraction · Intimacy · Values · Drive · Lifestyle   [multi — joined by |]
+fb_profile_q12	fb_profile	12. If something was wrong, which part?	Attachment · Communication · Attraction · Intimacy · Values · Drive · Lifestyle   [multi — joined by |]   (optional)
 fb_profile_q13	fb_profile	13. The report length / readability was…	Too short / Just right / A bit long / Too much text
 fb_profile_q14	fb_profile	14. I'd trust this to give me better matches than a normal app.	1–5 (Strongly disagree → Strongly agree)
   (Premium & pricing)			
 fb_profile_q15	fb_profile	15. This beta uses a starter question set. Would you answer more questions to unlock a deeper, more accurate profile?	Yes, gladly / Maybe / No
 fb_profile_q16	fb_profile	16. Would you pay a one-off fee for a personal report like this?	No / Maybe / Yes
-fb_profile_q17	fb_profile	17. If yes, what one-off price feels fair?	€4.99 / €9.99 / €14.99 / €19.99+
+fb_profile_q17	fb_profile	17. If yes, what one-off price feels fair?	€4.99 / €9.99 / €14.99 / €19.99+   (optional)
 fb_profile_q18	fb_profile	18. Would you subscribe to a premium Alunn account — unlock more assessments to deepen your profile and improve your match quality?	No / Maybe / Yes
-fb_profile_q19	fb_profile	19. If yes, what monthly price feels fair?	€4.99/mo / €9.99/mo / €14.99/mo / €19.99+/mo
-fb_profile_q20	fb_profile	20. Which premium features would make it worth paying for?	A deeper, more accurate profile (more questions) · See who's compatible with you before matching · See who already likes you · Advanced match filters (values, lifestyle, etc.) · Unlimited matches & messaging · Full compatibility breakdown for every match · Relationship coaching & tips · Profile boost / more visibility · Undo / rewind a pass · Browse privately (incognito) · Match in other cities (travel mode) · Ad-free experience   [multi — joined by |]
+fb_profile_q19	fb_profile	19. If yes, what monthly price feels fair?	€4.99/mo / €9.99/mo / €14.99/mo / €19.99+/mo   (optional)
+fb_profile_q20	fb_profile	20. Which premium features would make it worth paying for?	A deeper, more accurate profile (more questions) · See who's compatible with you before matching · See who already likes you · Advanced match filters (values, lifestyle, etc.) · Unlimited matches & messaging · Full compatibility breakdown for every match · Relationship coaching & tips · Profile boost / more visibility · Undo / rewind a pass · Browse privately (incognito) · Match in other cities (travel mode) · Ad-free experience   [multi — joined by |]   (optional)
   (Last bit)			
-fb_profile_q21	fb_profile	21. Anything you wish your profile had covered?	Sex/intimacy · Conflict style · Future goals · Family · Finances · Humour/fun · Other   [multi — joined by |]
-fb_profile_q22	fb_profile	22. Anything else about your profile?	free text
+fb_profile_q21	fb_profile	21. Anything you wish your profile had covered?	Sex/intimacy · Conflict style · Future goals · Family · Finances · Humour/fun · Other   [multi — joined by |]   (optional)
+fb_profile_q22	fb_profile	22. Anything else about your profile?	free text   (optional)
 —— FB_Match — couple match report ——			
+pairKey	fb_match	Couple pairing code — both partners' links share it	group by this to compare the two partners
 email	fb_match	1. Your email (to link with your assessment — kept private)	free text (stored in the "email" column)
+partnerName	fb_match	Your partner's first name	free text   (optional)
 fb_match_q2	fb_match	2. Overall, the report described us accurately.	1–5 (Strongly disagree → Strongly agree)
 fb_match_q3	fb_match	3. Accuracy — Attachment section	Spot on / Mostly / Mixed / Off / Way off
 fb_match_q4	fb_match	4. Accuracy — Communication section	Spot on / Mostly / Mixed / Off / Way off
@@ -52,4 +54,4 @@ fb_match_q11	fb_match	11. Did the report change how you see your dynamic?	Yes, n
 fb_match_q12	fb_match	12. Report length / readability	Too little / Just right / A bit long / Too much text
 fb_match_q13	fb_match	13. It would be useful (e.g. as a conversation starter).	1–5 (Strongly disagree → Strongly agree)
 fb_match_q14	fb_match	14. Would you recommend Alunn to a friend?	No / Maybe / Yes, definitely
-fb_match_q15	fb_match	15. Anything to add to or remove from the report?	free text
+fb_match_q15	fb_match	15. Anything to add to or remove from the report?	free text   (optional)

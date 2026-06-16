@@ -390,6 +390,12 @@ const FORMS = {
         "t": "email"
       },
       {
+        "q": "Your partner's first name",
+        "t": "text",
+        "opt": true,
+        "field": "partnerName"
+      },
+      {
         "n": 2,
         "q": "Overall, the report described us accurately.",
         "t": "scale"
@@ -565,10 +571,12 @@ function fbFormInner(form, presetEmail, embedded){
 
   form.questions.forEach(q=>{
     if(q.section){ parts.push(`<div class="section-divider">${fbEsc(q.section)}</div>`); return; }
-    const id = `${form.postType}_q${q.n}`;
+    const id = q.field || `${form.postType}_q${q.n}`;
     let ctrl='';
     if(q.t==='email'){
       ctrl=`<input type="email" name="${id}" id="fb-email" value="${fbEsc(presetEmail)}" placeholder="you@example.com">`;
+    } else if(q.t==='text'){
+      ctrl=`<input type="text" name="${id}" placeholder="Optional">`;
     } else if(q.t==='open'){
       ctrl=`<textarea name="${id}" rows="3" placeholder="Optional"></textarea>`;
     } else if(q.t==='scale'){
@@ -580,7 +588,8 @@ function fbFormInner(form, presetEmail, embedded){
       ctrl=`<div data-multi="${id}">`+(q.o||[]).map(function(o,i){var oid=id+'-m'+i;return `<div class="checkbox-option"><input type="checkbox" id="${oid}" value="${fbEsc(o)}"><label for="${oid}">${fbEsc(o)}</label></div>`;}).join('')+`</div>`;
     }
     const optTag = (q.opt || q.t === 'open') ? ' <span class="org">(optional)</span>' : '';
-    parts.push(`<div class="question-block" data-qid="${id}"><p class="question-text">${q.n}. ${fbEsc(q.q)}${optTag}</p>${ctrl}</div>`);
+    const numPrefix = (q.n != null) ? `${q.n}. ` : '';
+    parts.push(`<div class="question-block" data-qid="${id}"><p class="question-text">${numPrefix}${fbEsc(q.q)}${optTag}</p>${ctrl}</div>`);
   });
 
   parts.push(`<div class="error-msg" id="fb-err">Please add your email so we can link your feedback.</div>`);
@@ -618,8 +627,8 @@ async function fbSubmit(form, mountEl, opts){
   // Require every non-optional, non-open question to be answered.
   const missing=[];
   form.questions.forEach(q=>{
-    if(q.section||q.t==='email'||q.t==='open'||q.opt) return;
-    const id=`${form.postType}_q${q.n}`;
+    if(q.section||q.t==='email'||q.t==='open'||q.t==='text'||q.opt) return;
+    const id=q.field || `${form.postType}_q${q.n}`;
     const answered = q.t==='multi'
       ? !!mountEl.querySelector(`[data-multi="${id}"] input:checked`)
       : !!mountEl.querySelector(`input[name="${id}"]:checked`);
@@ -635,13 +644,17 @@ async function fbSubmit(form, mountEl, opts){
   err.classList.remove('visible');
 
   const payload={type:form.postType, email};
+  // Couple pairing (match form only): a shared code passed via ?pair= in the link.
+  // It's purely additive — if it's missing or wrong, the response still saves
+  // fully; it just won't link to a partner. Never blocks or dedupes anything.
+  if(form.postType==='fb_match'){ payload.pairKey = fbParam('pair') || ''; }
   form.questions.forEach(q=>{
     if(q.section||q.t==='email') return;
-    const id=`${form.postType}_q${q.n}`;
+    const id=q.field || `${form.postType}_q${q.n}`;
     if(q.t==='multi'){
       const box=mountEl.querySelector(`[data-multi="${id}"]`);
       payload[id]=box?[...box.querySelectorAll('input:checked')].map(i=>i.value).join('|'):'';
-    } else if(q.t==='open'){
+    } else if(q.t==='open'||q.t==='text'){
       const t=mountEl.querySelector(`[name="${id}"]`); payload[id]=t?t.value.trim():'';
     } else {
       const sel=mountEl.querySelector(`input[name="${id}"]:checked`); payload[id]=sel?sel.value:'';

@@ -269,15 +269,29 @@ async function generateMatch() {
     const people = await loadAllPeople();
     const A = findByEmail(people, emailA), B = findByEmail(people, emailB);
     if (!A || !B) { err.textContent = 'One or both emails not found.'; err.classList.add('visible'); return; }
-    renderMatchReport(matchPair(A, B));
+    renderMatchReport(matchPair(A, B), A.email, B.email);
   } catch (e) {
     err.textContent = (e && e.message) ? e.message : 'Could not load data — check the backend URL / PIN.'; err.classList.add('visible');
   } finally { spin.style.display = 'none'; }
 }
 
-function renderMatchReport(m) {
+function renderMatchReport(m, emailA, emailB) {
   const el = document.getElementById('match-result');
   el.style.display = 'block';
+
+  // Shared pair code for couple feedback (sorted emails). Both partners' links
+  // carry the same code, so their feedback rows line up for comparison.
+  const pairKey = [emailA, emailB].map(e => String(e || '').trim().toLowerCase()).filter(Boolean).sort().join(' + ');
+  const fbLink = (email) => new URL(`fb-match.html?email=${encodeURIComponent(email || '')}&pair=${encodeURIComponent(pairKey)}`, location.href).href;
+  const linksBlock = (emailA && emailB) ? `
+    <div class="report-section match-fb-links">
+      <div class="report-section-label">Couple feedback links</div>
+      <p class="report-body">Send each partner their own link. Their answers auto-pair so you can compare both views on this report. A wrong link never breaks anything — it just won't pair.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" style="flex:1;min-width:160px;" onclick="copyFbLink(this,'${escA(fbLink(emailA))}')">Copy link for ${escA(m.nameA)}</button>
+        <button class="btn btn-secondary" style="flex:1;min-width:160px;" onclick="copyFbLink(this,'${escA(fbLink(emailB))}')">Copy link for ${escA(m.nameB)}</button>
+      </div>
+    </div>` : '';
 
   const gateBanner = m.blocked
     ? `<div class="gate-banner">⚠ Hard-filter conflict: ${escA(m.blocked)}.<br>In normal matching this pair is hidden — shown here for your review only.</div>`
@@ -307,10 +321,21 @@ function renderMatchReport(m) {
     <div class="report-chart-card"><p class="chart-title">By dimension</p><div class="dim-bars">${bars}</div></div>
     <div class="report-card">${sections}</div>
     <p class="report-disclaimer">For guidance and reflection only — not a clinical assessment or a prediction of any outcome.</p>
+    ${linksBlock}
     <div style="display:flex;gap:10px;margin-top:24px;">
       <button class="btn btn-secondary btn-pdf" style="flex:1;" onclick="window.print()">Save as PDF</button>
     </div>`;
   animateProfileBars(el);
+}
+
+// Copy a couple-feedback link to the clipboard, with brief button feedback.
+function copyFbLink(btn, url) {
+  const done = () => { const t = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = t; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done, () => window.prompt('Copy this link:', url));
+  } else {
+    window.prompt('Copy this link:', url);
+  }
 }
 
 /* ── Tab 3: profile report ──────────────────────────────────────────────────*/
