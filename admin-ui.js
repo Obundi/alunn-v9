@@ -282,14 +282,13 @@ function renderMatchReport(m, emailA, emailB) {
   // Shared pair code for couple feedback (sorted emails). Both partners' links
   // carry the same code, so their feedback rows line up for comparison.
   const pairKey = [emailA, emailB].map(e => String(e || '').trim().toLowerCase()).filter(Boolean).sort().join(' + ');
-  const fbLink = (email) => new URL(`fb-match.html?email=${encodeURIComponent(email || '')}&pair=${encodeURIComponent(pairKey)}`, location.href).href;
+  const coupleLink = new URL(`fb-match.html?pair=${encodeURIComponent(pairKey)}`, location.href).href;
   const linksBlock = (emailA && emailB) ? `
     <div class="report-section match-fb-links">
-      <div class="report-section-label">Couple feedback links</div>
-      <p class="report-body">Send each partner their own link. Their answers auto-pair so you can compare both views on this report. A wrong link never breaks anything — it just won't pair.</p>
+      <div class="report-section-label">Couple feedback link</div>
+      <p class="report-body">One link for this couple — send it to either partner; they can use it and forward it to the other. Each just enters their own email, and both answers auto-pair so you can compare their views on this report. A wrong or shared link never breaks anything — at worst a response just won't pair.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" style="flex:1;min-width:160px;" onclick="copyFbLink(this,'${escA(fbLink(emailA))}')">Copy link for ${escA(m.nameA)}</button>
-        <button class="btn btn-secondary" style="flex:1;min-width:160px;" onclick="copyFbLink(this,'${escA(fbLink(emailB))}')">Copy link for ${escA(m.nameB)}</button>
+        <button class="btn btn-secondary" style="flex:1;min-width:200px;" onclick="copyFbLink(this,'${escA(coupleLink)}')">Copy couple feedback link</button>
       </div>
     </div>` : '';
 
