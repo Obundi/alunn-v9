@@ -324,11 +324,18 @@ function renderMatchReport(m, emailA, emailB) {
       ${d.tip ? `<div class="match-tip-box"><span class="match-tip-label">Coaching tip</span><span class="match-tip-text">${escA(d.tip)}</span></div>` : ''}
     </div>`).join('');
 
+  // Two-perspective line: only when someone ranked priorities AND the two sides differ.
+  const perspLine = (m.personalised && m.perspA != null && m.perspB != null && m.perspA !== m.perspB)
+    ? `<p class="persp-line">From ${escA(m.nameA)}'s priorities <strong>${m.perspA}</strong> &nbsp;·&nbsp; From ${escA(m.nameB)}'s priorities <strong>${m.perspB}</strong></p>
+       <p class="persp-note">The overall blends both views. Each side weights the same compatibility by what that person said matters most.</p>`
+    : '';
+
   el.innerHTML = `
     <div class="report-chart-card" style="text-align:center;">
       <p class="report-name">${escA(m.nameA)} &amp; ${escA(m.nameB)}</p>
       <p class="stars-big">${m.stars || '–'}</p>
       <p class="chart-title">Overall compatibility · ${m.overall}/100${m.blocked ? ' · gated' : ''}</p>
+      ${perspLine}
     </div>
     ${gateBanner}
     <div class="report-chart-card"><p class="chart-title">By dimension</p><div class="dim-bars">${bars}</div></div>

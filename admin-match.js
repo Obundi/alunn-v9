@@ -429,7 +429,13 @@ function matchPair(personA, personB) {
   // Final spread-curve stretches the compressed weighted mean so scores discriminate
   // (a mean of 7 capped dims clusters ~0.42× as wide as its parts — see engine-config).
   const SP = ENGINE.spread;
-  const overall = rawMean === null ? null : clampR(SP.displayMid + (rawMean - SP.rawCenter) * SP.gain);
+  const stretch = raw => clampR(SP.displayMid + (raw - SP.rawCenter) * SP.gain);
+  const overall = rawMean === null ? null : stretch(rawMean);
+  // Each person's own perspective score (their priorities applied). Equal to `overall`
+  // when neither ranked; the report only breaks them out when they differ.
+  const perspA = fitA === null ? null : stretch(fitA);
+  const perspB = fitB === null ? null : stretch(fitB);
+  const personalised = !!((A.prefRank && A.prefRank.length) || (B.prefRank && B.prefRank.length));
 
   // Per-dimension report band + dynamic, pairing-specific text
   const dims = DIMENSIONS.map(d => {
@@ -449,6 +455,8 @@ function matchPair(personA, personB) {
     blocked,                       // null or reason string
     blockedCode,                   // null or category code (gender/kids/reltype/intent/age/religion)
     overall,                       // 0–100 or null (computed even when gated)
+    perspA, perspB,                // each person's own-priorities score (= overall if nobody ranked)
+    personalised,                  // true if either person ranked priorities
     stars: overall === null ? null : starsFor(overall),
     hidden: !blocked && overall !== null && starsFor(overall) === null, // below lowest band
     perDim, dims,

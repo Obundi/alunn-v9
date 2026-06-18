@@ -696,6 +696,24 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 }
 
 /* ── Mobile ── */
+/* Match report — two-perspective scores (shown when priorities differ) */
+.persp-line {
+  margin-top: 12px;
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.85);   /* on the dark forest report card */
+}
+.persp-line strong {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  color: #E8915F;                  /* lightened terracotta — pops on dark green */
+}
+.persp-note {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.4;
+}
+
 /* Priorities step — dimension definitions */
 .priority-defs {
   list-style: none;
