@@ -127,6 +127,18 @@ function scoreAnswers(a) {
   const prefExpr = polPref(a, pf.expression);
   const prefConf = polPref(a, pf.conflict);
 
+  /* ── Personal dimension priorities (optional) ──
+     PREF_W1..W3 store dimension codes the person ranked most important.
+     Kept valid, de-duplicated and in order; null if none provided. */
+  const validDims = DIMENSIONS.map(d => d.code);
+  const prefSeen = {}, prefRank = [];
+  ['PREF_W1', 'PREF_W2', 'PREF_W3'].forEach(f => {
+    const v = a[f];
+    if (v === undefined || v === null || v === '') return;
+    const code = String(v).trim().toUpperCase();
+    if (validDims.indexOf(code) !== -1 && !prefSeen[code]) { prefSeen[code] = 1; prefRank.push(code); }
+  });
+
   /* ── Clarity% (answered scored fields / 86) ── */
   const scoredFields = scoredFieldList();
   const answeredCount = scoredFields.filter(f => {
@@ -148,6 +160,8 @@ function scoreAnswers(a) {
     bigO, bigC, bigE, bigS, bigA, ambTrait,
     // polarity prefs
     prefOver, prefSoc, prefAmb, prefOrg, prefStab, prefOpen, prefExpr, prefConf,
+    // personal dimension priorities (rank 1→3 of dimension codes), or null
+    prefRank: prefRank.length ? prefRank : null,
     // meta
     clarity
   };

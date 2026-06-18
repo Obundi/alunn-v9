@@ -18,17 +18,56 @@ const ENGINE = {
     LIF: 6   // Lifestyle
   },
 
-  /* ── Star thresholds (overall score ≥) — CONFIG B13:B19 ────────────────── */
-  // Evaluated top-down; first match wins. Below the lowest ⇒ hidden (gate out).
+  /* ── Star thresholds (overall score ≥) ─────────────────────────────────────
+     Recalibrated to the post-spread distribution (see `spread` below): on the
+     simulated population 5★≈top 6%, 4½★≈top 15%, 4★≈top 30%, 3½★≈median.
+     Evaluated top-down; first match wins. Below the lowest ⇒ hidden. */
   starBands: [
-    { stars: '★★★★★',  min: 85 },
-    { stars: '★★★★½', min: 78 },
-    { stars: '★★★★',   min: 70 },
+    { stars: '★★★★★',  min: 80 },
+    { stars: '★★★★½', min: 75 },
+    { stars: '★★★★',   min: 69 },
     { stars: '★★★½',  min: 62 },
-    { stars: '★★★',     min: 55 },
-    { stars: '★★½',    min: 48 }
-    // below 48 ⇒ hidden
+    { stars: '★★★',     min: 56 },
+    { stars: '★★½',    min: 49 }
+    // below 49 ⇒ hidden
   ],
+
+  /* ── Match recalibration knobs (post-beta spread tuning) ────────────────────
+     Why: a weighted mean of 7 capped 0–100 dimensions clusters hard (random
+     pairs landed 68–82, SD 4). Two fixes, both tuned via a Monte-Carlo over the
+     real scorer/matcher:
+       1) matchScale — decompress each dimension so genuinely poor fits can score
+          low (no more artificial floors at 72/55/60), and spread the otherwise
+          near-constant Polarity dimension.
+       2) spread — a final linear stretch on the overall weighted mean so the
+          score discriminates (target: mean≈62, SD≈12 on the sim population).
+     All numbers live HERE so the engine stays recalibratable from one place. */
+  matchScale: {
+    attSlope: 1.0, attSecureFloor: 55,   // Attachment: distance slope (was 0.7) + Secure-pair floor (was 72)
+    comLo: 38, comHi: 92,                 // Communication style-matrix remap (was effective 55..85)
+    drvLo: 40, drvHi: 90,                 // Drive type-matrix remap (was effective 60..85)
+    intSlope: 1.0, lifSlope: 1.0,         // Intimacy / Lifestyle distance slopes (were 0.8)
+    polCenter: 50, polGain: 1.8           // Polarity: spread around its center (was a near-constant ~50)
+  },
+
+  // Final overall spread-curve. final = displayMid + (rawWeightedMean − rawCenter) × gain, clamped 0–100.
+  // rawCenter = the simulated random-pair mean of the (decompressed) weighted mean; fixed so the
+  // transform is stable as the user base grows (NOT re-derived per population).
+  spread: { rawCenter: 72, displayMid: 62, gain: 2.0 },
+
+  /* ── Personal dimension weighting (optional, additive) ──────────────────────
+     If a person ranks their top dimensions (assessment fields PREF_W1..W3 →
+     scores.prefRank, e.g. ['VAL','LIF','COM']), their match is scored with weights
+     blended from that ranking and the science baseline above. A person who ranked
+     nothing uses the baseline unchanged — so an all-blank pair scores EXACTLY as
+     before (verified). Matching is per-perspective: each side weights the same
+     per-dimension fits by its OWN priorities; the two are averaged.
+     personal% = points/Σpoints; final = prefBlend·personal + (1−prefBlend)·baseline.
+     Validated on the sim: random rankings move the population mean <0.1 pt, so the
+     spread-curve anchor above stays valid. */
+  prefBlend: 0.6,             // share given to the person's own ranking (rest = science baseline)
+  prefRankPoints: [4, 3, 2],  // points awarded to ranked #1 / #2 / #3
+  prefBasePoint: 1,           // points for every un-ranked dimension
 
   /* ── Communication style matrix — CONFIG B23:E26 ───────────────────────── */
   commMatrix: {

@@ -39,9 +39,16 @@ out.join('\n');
 
 /* ── matching check (Alex × Sam) ── */
 function mkPerson(pid){var raw=people[pid];var f={};['Gender','Orientation','LookingFor','Intent','RelType','WantKids','AgeMin','AgeMax','City','HasKids','OpenToKids','Religion','RelImportance'].forEach(function(k){f[k]=raw[k];});return {name:raw.Name,filters:f,scores:scoreAnswers(raw)};}
+// Post-recalibration expectations (decompressed dims + polarity spread + final spread-curve).
 var mr=matchPair(mkPerson('P01'),mkPerson('P02'));
-var mfails=0;var exp={ATT:72,COM:85,POL:70,INT:100,VAL:85,DRV:56,LIF:84};
+var mfails=0;var exp={ATT:55,COM:83,POL:85,INT:100,VAL:85,DRV:44,LIF:80};
 ['ATT','COM','POL','INT','VAL','DRV','LIF'].forEach(function(c){if(mr.perDim[c]!==exp[c]){mfails++;}});
-if(mr.overall!==78)mfails++; if(mr.stars!=='★★★★½')mfails++;
+if(mr.overall!==68)mfails++; if(mr.stars!=='★★★½')mfails++;
 var tail = '\nMATCH Alex×Sam: overall='+mr.overall+' stars='+mr.stars+(mfails?' ('+mfails+' MATCH MISMATCHES)':' OK');
-out.join('\n')+tail;
+
+/* ── personal-weight check: no prefs == baseline; with prefs it shifts ── */
+var alexPref=mkPerson('P01'); alexPref.scores.prefRank=['VAL','LIF','COM'];
+var prefMr=matchPair(alexPref, mkPerson('P02'));
+var pcheck=(mr.overall===68 && prefMr.overall!==null && prefMr.overall!==68)?' OK':' CHECK';
+var prefTail='\nPREF  Alex×Sam: no-prefs='+mr.overall+' (baseline) -> Alex prioritises VAL,LIF,COM='+prefMr.overall+pcheck;
+out.join('\n')+tail+prefTail;

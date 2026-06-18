@@ -137,6 +137,28 @@ function init() {
   // 2..N — question groups
   QUESTION_GROUPS.forEach((g, i) => screens.push(buildQScreen(app, g, 2 + i)));
 
+  // Priorities — rank your top 3 dimensions (feeds personal match weighting)
+  const priority = makeScreen('screen-priority');
+  const dimList = PRIORITY_DIMS.map(d => `<li><strong>${escHtml(d.label)}</strong> — ${escHtml(d.def)}</li>`).join('');
+  const prefSelect = (n, lbl) => {
+    const cur = state.answers['PREF_W' + n] || '';
+    const opts = ['<option value="">Select…</option>']
+      .concat(PRIORITY_DIMS.map(d => `<option value="${d.code}" ${cur === d.code ? 'selected' : ''}>${escHtml(d.label)}</option>`)).join('');
+    return `<div class="field"><label>${lbl} <span class="req">*</span></label><select id="pref-${n}" data-field="PREF_W${n}">${opts}</select></div>`;
+  };
+  priority.innerHTML = `${logoHtml(true)}
+    <p class="step-counter">Last step — your priorities</p>
+    <h2>What matters most to you?</h2>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Everyone weighs compatibility differently. Tell us which dimensions matter <strong>most to you</strong> and we'll tilt your matches toward them — on top of the science, never instead of it. Pick your <strong>top three, in order</strong>.</div></div>
+    <ul class="priority-defs">${dimList}</ul>
+    ${prefSelect(1, '1 — Most important')}
+    ${prefSelect(2, '2 — Second')}
+    ${prefSelect(3, '3 — Third')}
+    <div class="error-msg" id="err-priority">Please choose three <em>different</em> dimensions for your top three.</div>
+    <button class="btn" id="btn-priority-next">Continue</button>
+    <button class="btn btn-secondary" id="btn-priority-back">Back</button>`;
+  app.appendChild(priority); screens.push(priority);
+
   // last-1 — report
   // N-1 — assessment-experience feedback (shown BEFORE the profile)
   const assessFb = makeScreen('screen-assess-fb');
@@ -201,6 +223,27 @@ function wireEvents() {
   // Setup → mandatory gate
   document.getElementById('btn-setup-back').addEventListener('click', () => showScreen(0));
   document.getElementById('btn-setup-next').addEventListener('click', collectAndValidateSetup);
+
+  // Priorities → persist on change, require three distinct, then feedback + reveal
+  const priorityScreen = document.getElementById('screen-priority');
+  priorityScreen.addEventListener('change', e => {
+    if (e.target.dataset && e.target.dataset.field) { state.answers[e.target.dataset.field] = e.target.value; saveProgress(); }
+  });
+  document.getElementById('btn-priority-back').addEventListener('click', () => {
+    showScreen(screens.findIndex(s => s.id === 'screen-priority') - 1);
+  });
+  document.getElementById('btn-priority-next').addEventListener('click', () => {
+    const picks = [1, 2, 3].map(n => document.getElementById('pref-' + n).value);
+    const distinct = new Set(picks.filter(Boolean));
+    if (picks.some(p => !p) || distinct.size !== 3) {
+      document.getElementById('err-priority').classList.add('visible');
+      return;
+    }
+    document.getElementById('err-priority').classList.remove('visible');
+    picks.forEach((code, i) => { state.answers['PREF_W' + (i + 1)] = code; });
+    saveProgress();
+    enterAssessFeedback();
+  });
 
   // Question screens: nav buttons appended dynamically
   screens.forEach((screen, idx) => {

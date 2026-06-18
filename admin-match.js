@@ -50,26 +50,32 @@ function polarityMatch(A, B) {
 
   const aToB = rows.reduce((s, r) => s + r.aToB, 0) / rows.length;
   const bToA = rows.reduce((s, r) => s + r.bToA, 0) / rows.length;
-  return { match: clampR((aToB + bToA) / 2), rows };
+  // Spread the otherwise near-constant polarity score around its centre (see matchScale).
+  const MS = ENGINE.matchScale;
+  const raw = (aToB + bToA) / 2;
+  return { match: clampR(MS.polCenter + (raw - MS.polCenter) * MS.polGain), rows };
 }
 
 /* ── Other dimension matches (§6.2) ─────────────────────────────────────────*/
 function attMatch(A, B) {
   if (A.attComp === null || B.attComp === null) return null;
-  const base = 100 - 0.7 * Math.abs(A.attComp - B.attComp);
+  const MS = ENGINE.matchScale;
+  const base = 100 - MS.attSlope * Math.abs(A.attComp - B.attComp);
   const eitherSecure = A.attStyle === 'Secure' || B.attStyle === 'Secure';
-  return clampR(eitherSecure ? Math.max(72, base) : Math.max(0, base));
+  return clampR(eitherSecure ? Math.max(MS.attSecureFloor, base) : Math.max(0, base));
 }
 
 function comMatch(A, B) {
   if (A.comMax === null || B.comMax === null || !A.comStyle || !B.comStyle) return null;
+  const MS = ENGINE.matchScale;
   const mtx = ENGINE.commMatrix[A.comStyle][B.comStyle];
-  return clampR(0.5 * (100 - Math.abs(A.comMax - B.comMax)) + 0.5 * mtx);
+  const mtx2 = (mtx - 55) / 30 * (MS.comHi - MS.comLo) + MS.comLo; // remap 55..85 → comLo..comHi
+  return clampR(0.5 * (100 - Math.abs(A.comMax - B.comMax)) + 0.5 * mtx2);
 }
 
 function intMatch(A, B) {
   if (A.intLvl === null || B.intLvl === null) return null;
-  return clampR(100 - 0.8 * Math.abs(A.intLvl - B.intLvl));
+  return clampR(100 - ENGINE.matchScale.intSlope * Math.abs(A.intLvl - B.intLvl));
 }
 
 function valMatch(A, B) {
@@ -79,15 +85,17 @@ function valMatch(A, B) {
 
 function drvMatch(A, B) {
   if (!A.drvType || !B.drvType) return null;
+  const MS = ENGINE.matchScale;
   const mtx = ENGINE.driveMatrix[A.drvType][B.drvType];
+  const mtx2 = (mtx - 60) / 25 * (MS.drvHi - MS.drvLo) + MS.drvLo; // remap 60..85 → drvLo..drvHi
   const pctDiff = (Math.abs(A.drvB - B.drvB) + Math.abs(A.drvC - B.drvC) +
                    Math.abs(A.drvE - B.drvE) + Math.abs(A.drvN - B.drvN)) / 4;
-  return clampR(0.6 * mtx + 0.4 * (100 - pctDiff));
+  return clampR(0.6 * mtx2 + 0.4 * (100 - pctDiff));
 }
 
 function lifMatch(A, B) {
   if (A.lifLvl === null || B.lifLvl === null) return null;
-  return clampR(100 - 0.8 * Math.abs(A.lifLvl - B.lifLvl));
+  return clampR(100 - ENGINE.matchScale.lifSlope * Math.abs(A.lifLvl - B.lifLvl));
 }
 
 /* ── Hard-filter gate (§6.3, FULL set) ──────────────────────────────────────
@@ -162,6 +170,41 @@ function hardFilterGate(fA, fB) {
 }
 
 /* ── Star mapping (§6.6) ─────────────────────────────────────────────────── */
+/* ── Personal priority weights (§ optional) ─────────────────────────────────
+   Turns a person's ranked top dimensions (prefRank, e.g. ['VAL','LIF','COM'])
+   into a weight vector blended with the science baseline. No ranking ⇒ the
+   baseline is returned unchanged, so scoring is identical to before.
+   ─────────────────────────────────────────────────────────────────────────── */
+function blendedWeights(prefRank) {
+  const base = ENGINE.weights;
+  if (!prefRank || !prefRank.length) return base;
+  const pts = {};
+  DIMENSIONS.forEach(d => { pts[d.code] = ENGINE.prefBasePoint; });
+  ENGINE.prefRankPoints.forEach((p, i) => {
+    const code = prefRank[i];
+    if (code && pts[code] !== undefined) pts[code] = p;
+  });
+  let sum = 0;
+  DIMENSIONS.forEach(d => { sum += pts[d.code]; });
+  const b = ENGINE.prefBlend, w = {};
+  DIMENSIONS.forEach(d => {
+    const personal = pts[d.code] / sum * 100;
+    w[d.code] = b * personal + (1 - b) * base[d.code];
+  });
+  return w;
+}
+
+// Weighted mean of the per-dimension fits using a given weight vector (answered dims only).
+function weightedFit(perDim, W) {
+  let wSum = 0, wxSum = 0;
+  for (const d of DIMENSIONS) {
+    const m = perDim[d.code];
+    if (m === null) continue;
+    wSum += W[d.code]; wxSum += m * W[d.code];
+  }
+  return wSum ? wxSum / wSum : null;
+}
+
 function starsFor(overall) {
   if (overall === null) return null;
   for (const band of ENGINE.starBands) if (overall >= band.min) return band.stars;
@@ -178,34 +221,50 @@ function matchNarrative(code, A, B, band, nA, nB, ctx) {
   ctx = ctx || {};
   const lower = s => (s || '').toLowerCase();
   const gap = (x, y) => Math.abs((x == null ? 0 : x) - (y == null ? 0 : y));
-  const art = w => (/^[aeiou]/i.test(w || '') ? 'an' : 'a'); // a / an
 
   switch (code) {
     case 'ATT': {
       const aS = A.attStyle, bS = B.attStyle;
       const secure = [aS, bS].filter(x => x === 'Secure').length;
       const hasAnx = [aS, bS].includes('Anxious'), hasAvo = [aS, bS].includes('Avoidant');
+      // Per-person action for a non-secure style.
+      const act = (style, n) => ({
+        Anxious:  `${n}: when you want reassurance, ask for it directly rather than waiting or testing.`,
+        Avoidant: `${n}: notice the urge to withdraw and try staying in the room a little longer.`,
+        Fearful:  `${n}: go slow with closeness — predictability is what settles the push–pull.`,
+        Mixed:    `${n}: notice which mode shows up under stress and name it out loud.`
+      }[style] || `${n}: keep naming what you need.`);
+
       if (secure === 2)
-        return { meaning: 'Both of you read as secure — closeness and independence both feel safe, and conflict tends to resolve without losing warmth. This is the steadiest attachment foundation there is.',
-                 tip: 'Keep naming what you each need when stressed — security grows when both of you feel free to either reach out or take space.' };
+        return { meaning: 'You\'re both securely attached — closeness and independence feel safe to each of you, and conflict tends to resolve without losing warmth. The steadiest possible foundation.',
+                 tip: 'Keep naming what you each need when stressed — security grows when you both feel free to reach out or take space.' };
       if (secure === 1) {
-        const secName = aS === 'Secure' ? nA : nB, othName = aS === 'Secure' ? nB : nA, othStyle = aS === 'Secure' ? bS : aS;
-        return { meaning: `${secName} brings a secure base, which tends to steady ${othName}'s more ${lower(othStyle)} moments — a genuinely stabilising pairing.`,
-                 tip: `${secName}: stay patient and consistent — that steadiness is exactly what helps ${othName} relax into the relationship.` };
+        const secN = aS === 'Secure' ? nA : nB, othN = aS === 'Secure' ? nB : nA, othS = aS === 'Secure' ? bS : aS;
+        return { meaning: `${secN} brings a secure base, which steadies ${othN}'s more ${lower(othS)} moments — a genuinely stabilising pairing.`,
+                 tip: `${secN}: stay steady and consistent — that reliability is what helps ${othN} settle. ${act(othS, othN)}` };
       }
       if (hasAnx && hasAvo) {
-        const anxName = aS === 'Anxious' ? nA : nB, avoName = aS === 'Avoidant' ? nA : nB;
-        return { meaning: `A classic anxious–avoidant dynamic: ${anxName} reaches for closeness just as ${avoName} reaches for space. It can absolutely work, but it's the pattern most prone to push–pull.`,
-                 tip: `Agree a 'pause and return' rule: ${avoName} can take space, but commit to a time to reconnect so ${anxName} never feels abandoned.` };
+        const anxN = aS === 'Anxious' ? nA : nB, avoN = aS === 'Avoidant' ? nA : nB;
+        return { meaning: `A classic anxious–avoidant pull: ${anxN} reaches for closeness just as ${avoN} reaches for space — the pattern most prone to push–pull.`,
+                 tip: `${anxN}: self-soothe first, then ask for what you need directly. ${avoN}: offer a little reassurance before taking space, and say when you'll reconnect.` };
       }
-      if (aS === bS)
-        return { meaning: `You share an ${lower(aS)} leaning — you'll instinctively understand each other's wiring, though neither of you naturally plays the calm anchor when things heat up.`,
-                 tip: 'Watch for moments where you amplify each other; one of you deliberately slowing down breaks the loop.' };
-      if ([aS, bS].includes('Fearful'))
-        return { meaning: 'At least one of you carries a fearful (mixed) pattern — wanting closeness and fearing it at once. Expect some push–pull; patience and consistency settle it over time.',
-                 tip: 'Go slow and keep things predictable — reliability is what quiets the push–pull.' };
-      return { meaning: 'Your attachment styles are a mixed pairing — workable with awareness around when one of you wants closeness and the other wants space.',
-               tip: 'When one reaches and the other retreats, name the pattern out loud instead of reacting to it.' };
+      if (aS === bS) { // both the same non-secure style → shared voice
+        const both = {
+          Anxious:  { meaning: 'You both lean anxious — you each value reassurance deeply, so you\'ll understand one another, but neither of you naturally provides the calm when you\'re both activated.', tip: 'When you\'re both anxious at once, one of you deliberately slowing down and self-soothing breaks the spiral.' },
+          Avoidant: { meaning: 'You both lean avoidant — you\'ll respect each other\'s need for space, but closeness can quietly fade if neither of you reaches in.', tip: 'Schedule deliberate closeness rather than waiting for the other to reach first.' },
+          Fearful:  { meaning: 'You both carry a fearful (mixed) pattern — each craving closeness yet fearing it, so things can feel push–pull on both sides.', tip: 'Keep things slow and predictable, and name the push–pull when you feel it instead of reacting.' },
+          Mixed:    { meaning: 'You both have a balanced, mixed attachment signature — adaptable, with no single dominant pattern.', tip: 'Notice which mode each of you slips into under stress, and name it.' }
+        }[aS];
+        if (both) return both;
+      }
+      if ([aS, bS].includes('Fearful')) { // fearful + a different style → name the fearful one
+        const fearN = aS === 'Fearful' ? nA : nB, othN = aS === 'Fearful' ? nB : nA, othS = aS === 'Fearful' ? bS : aS;
+        return { meaning: `${fearN}'s attachment is mixed (fearful) — craving closeness yet fearing it, which can feel push–pull. ${othN} (${lower(othS)}) can steady this by staying consistent.`,
+                 tip: `${fearN}: go slow with someone who feels safe. ${act(othS, othN)}` };
+      }
+      // Any other differing non-secure pairing → name both sides + an action each.
+      return { meaning: `${nA} leans ${lower(aS)} while ${nB} leans ${lower(bS)} — a mixed pairing that works with awareness of when one wants closeness and the other wants space.`,
+               tip: `${act(aS, nA)} ${act(bS, nB)}` };
     }
 
     case 'COM': {
@@ -214,48 +273,58 @@ function matchNarrative(code, A, B, band, nA, nB, ctx) {
       if (a === b)
         return { meaning: `You both communicate in a ${lower(a)} style, so you'll recognise each other's instincts and rarely misread intent.`,
                  tip: `Shared style makes this easy — just guard against both of you ${pitfall[a] || 'falling into the same blind spot'}.` };
-      const pair = [a, b];
-      if (pair.includes('Analytical') && pair.includes('Expressive')) {
-        const exp = a === 'Expressive' ? nA : nB, ana = a === 'Analytical' ? nA : nB;
-        return { meaning: `${exp} processes out loud and in the moment, while ${ana} needs to go quiet and think first. Unspoken, ${exp} can read ${ana}'s silence as withdrawal.`,
-                 tip: `${ana}: say "I need time, not distance." ${exp}: give that space without chasing.` };
-      }
-      if (pair.includes('Direct') && pair.includes('Harmonious')) {
-        const dir = a === 'Direct' ? nA : nB, har = a === 'Harmonious' ? nA : nB;
-        return { meaning: `${dir} raises things head-on; ${har} prefers to keep the peace. That can balance well — as long as ${har}'s calm isn't hiding unspoken issues.`,
-                 tip: `${har}: voice one small thing early. ${dir}: lead with a little warmth so directness lands as care.` };
-      }
-      return { meaning: `Your communication styles differ — ${lower(a)} (${nA}) versus ${lower(b)} (${nB}) — workable with a little translation between your approaches.`,
-               tip: 'Each say how you handle a tough conversation, so neither style gets misread in the moment.' };
+      // Any differing pair → describe who does what + a per-person tip.
+      const desc = { Direct: 'raises issues head-on', Expressive: 'processes feelings out loud, in the moment', Analytical: 'needs to think things through quietly first', Harmonious: 'tends to keep the peace' };
+      const tipFor = {
+        Direct:     n => `${n}: lead with a little warmth so directness lands as care.`,
+        Expressive: n => `${n}: don't read a quieter partner's silence as rejection — give them room.`,
+        Analytical: n => `${n}: say "I need time, not distance" so going quiet doesn't read as withdrawal.`,
+        Harmonious: n => `${n}: voice one small thing early, before keeping the peace lets it build up.`
+      };
+      return { meaning: `${nA} ${desc[a]}, while ${nB} ${desc[b]} — workable with a little translation between your styles.`,
+               tip: `${tipFor[a](nA)} ${tipFor[b](nB)}` };
     }
 
     case 'POL': {
-      // Name the strongest-aligned and weakest (biggest-gap) trait axes.
       const AX = {
-        Social: 'social energy (how outgoing you each are)',
-        Ambition: 'ambition and drive',
-        Organisation: 'how structured vs spontaneous you each are',
-        Stability: 'emotional evenness under stress',
-        Openness: 'openness to new experiences',
-        Expression: 'how openly you each show feelings',
-        Conflict: 'how directly you each handle conflict'
+        Social:       { label: 'social energy', trait: 'bigE',     hi: 'is more outgoing and socially energised', lo: 'is more low-key and reserved' },
+        Ambition:     { label: 'ambition and drive', trait: 'ambTrait', hi: 'is more career-driven', lo: 'is more relaxed about ambition' },
+        Organisation: { label: 'structure vs spontaneity', trait: 'bigC', hi: 'is more planned and structured', lo: 'is more spontaneous and go-with-the-flow' },
+        Stability:    { label: 'emotional evenness', trait: 'bigS', hi: 'stays more even-keeled under stress', lo: 'rides the emotional ups and downs more' },
+        Openness:     { label: 'openness to new experiences', trait: 'bigO', hi: 'is more drawn to novelty and new ideas', lo: 'prefers the familiar and tried-and-true' },
+        Expression:   { label: 'showing feelings', trait: 'comExp', hi: 'shows feelings more openly', lo: 'holds feelings closer to the chest' },
+        Conflict:     { label: 'handling conflict', trait: 'comDir', hi: 'tackles conflict head-on', lo: 'tends to avoid confrontation' }
+      };
+      const tipFor = {
+        Social:       (hi, lo) => `${hi}: don't read ${lo}'s quieter pace as disinterest. ${lo}: say when you need a calmer night rather than pushing through.`,
+        Ambition:     (hi, lo) => `${hi}: protect shared downtime so drive doesn't crowd the relationship. ${lo}: back ${hi}'s goals rather than feeling measured against them.`,
+        Organisation: (hi, lo) => `${hi}: leave room for spontaneity. ${lo}: meet ${hi} on the plans that genuinely matter to them.`,
+        Stability:    (hi, lo) => `${hi}: stay steady when ${lo} is stirred up. ${lo}: name what you feel early, before it peaks.`,
+        Openness:     (hi, lo) => `${hi}: introduce new things gently. ${lo}: try saying yes to one of ${hi}'s ideas now and then.`,
+        Expression:   (hi, lo) => `${hi}: give ${lo} time to find the words. ${lo}: share a little more than feels natural.`,
+        Conflict:     (hi, lo) => `${hi}: soften the opener. ${lo}: don't let things slide — raise them while they're small.`
       };
       const rows = (ctx.polRows || []).filter(r => r.name !== 'Overarching');
       if (rows.length) {
         const fit = r => (r.aToB + r.bToA) / 2;
         const sorted = rows.slice().sort((a, b) => fit(a) - fit(b));
-        const weak = AX[sorted[0].name] || lower(sorted[0].name);
-        const strong = AX[sorted[sorted.length - 1].name] || lower(sorted[sorted.length - 1].name);
+        const gapAx = sorted[0].name, strongAx = sorted[sorted.length - 1].name;
+        const G = AX[gapAx], S = AX[strongAx];
+        const strongLbl = (S && S.label) || lower(strongAx);
         if (band === 'High')
-          return { meaning: `What you each look for and who the other actually is line up well — your strongest pull is around ${strong}. This is well-founded attraction, not just chemistry.`,
-                   tip: `Name what drew you together — your alignment on ${strong} — and keep choosing it as the novelty fades.` };
+          return { meaning: `What you each look for and who the other actually is line up well — you're especially well matched on ${strongLbl}. Well-founded attraction, not just chemistry.`,
+                   tip: `Name what drew you together — your fit on ${strongLbl} — and keep choosing it as the novelty fades.` };
+        // Med / Low: name who's on each side of the biggest-gap axis.
+        const aT = A[G.trait], bT = B[G.trait];
+        const hiN = (aT == null ? 0 : aT) >= (bT == null ? 0 : bT) ? nA : nB;
+        const loN = hiN === nA ? nB : nA;
+        const sides = `${hiN} ${G.hi}, while ${loN} ${G.lo}`;
         if (band === 'Med')
-          return { meaning: `You're well-matched on ${strong}, but ${weak} is where what one of you is drawn to and who the other is differ most — a workable gap, just worth naming.`,
-                   tip: `Talk specifically about ${weak}: agree where you'll meet in the middle, rather than expecting the other to change.` };
-        return { meaning: `There's a real gap between what one of you is drawn to and who the other is — most of all around ${weak} (you align best on ${strong}). Attraction here can run hot, then cool as that surfaces.`,
-                 tip: `Be honest early about whether the difference in ${weak} energises you or drains you — that's the make-or-break.` };
+          return { meaning: `You're well matched on ${strongLbl}, but ${G.label} is where you differ most — ${sides}. A workable gap, just worth naming.`,
+                   tip: tipFor[gapAx](hiN, loN) };
+        return { meaning: `There's a real gap in what you each want versus who the other is — most of all on ${G.label}: ${sides}. Attraction can run hot then cool as that surfaces (you align best on ${strongLbl}).`,
+                 tip: `${tipFor[gapAx](hiN, loN)} Be honest about whether this difference energises or drains you.` };
       }
-      // Fallback if axis data is missing.
       if (band === 'High') return { meaning: 'What each of you wants closely matches who the other is — well-founded attraction.', tip: 'Name what drew you together and keep choosing it.' };
       if (band === 'Med') return { meaning: 'A fair fit between what you want and who the other is, with some real gaps.', tip: 'Treat the differences as range, not as something wrong.' };
       return { meaning: 'A gap between what one of you wants and who the other is — attraction may spark then cool.', tip: 'Be honest early about whether the differences energise or drain you.' };
@@ -268,18 +337,18 @@ function matchNarrative(code, A, B, band, nA, nB, ctx) {
                  tip: 'Keep talking openly about desire; aligned now doesn\'t mean aligned forever.' };
       const hi = A.intLvl > B.intLvl ? nA : nB, lo = A.intLvl > B.intLvl ? nB : nA;
       return { meaning: `${hi} places more weight on physical closeness and affection than ${lo} does — a real but manageable difference if it's spoken about.`,
-               tip: 'Have the explicit conversation early; a mismatch left unspoken quietly erodes connection.' };
+               tip: `${hi}: ask for the closeness you want without keeping score. ${lo}: name your own pace, so ${hi} doesn't read 'less' as rejection.` };
     }
 
     case 'VAL': {
       if (A.valLvl == null || B.valLvl == null) return { meaning: '', tip: '' };
       const g = gap(A.valLvl, B.valLvl);
       if (g <= 20)
-        return { meaning: 'You\'re closely aligned in outlook and core values — one of the strongest predictors of going the distance.',
+        return { meaning: 'You share a similar outlook and core values — one of the strongest predictors of going the distance.',
                  tip: 'Lean on this shared ground when you disagree on the smaller things.' };
       const prog = A.valLvl > B.valLvl ? nA : nB, trad = A.valLvl > B.valLvl ? nB : nA;
       return { meaning: `${prog} leans more progressive while ${trad} leans more traditional — bridgeable, but worth being clear about which differences matter.`,
-               tip: 'Test it on something concrete — family, money, faith — before getting deeply invested.' };
+               tip: `${prog}: hold what you believe without expecting ${trad} to shift. ${trad}: be clear about your anchors so ${prog} can honour them. Test it on something concrete — family, money, faith — before getting deeply invested.` };
     }
 
     case 'DRV': {
@@ -307,16 +376,22 @@ function matchNarrative(code, A, B, band, nA, nB, ctx) {
       if (g <= 15)
         return { meaning: 'Your day-to-day rhythms — pace, social energy, ambition — line up easily, so there\'s little routine friction.',
                  tip: 'Enjoy the ease, and revisit as life circumstances change.' };
+      const ambGap = gap(A.ambTrait, B.ambTrait), socGap = gap(A.bigE, B.bigE);
       const bits = [];
-      if (gap(A.ambTrait, B.ambTrait) >= 30) {
-        const hi = A.ambTrait > B.ambTrait ? nA : nB; bits.push(`${hi} is the more career-driven of you`);
+      if (ambGap >= 30) bits.push(`${A.ambTrait > B.ambTrait ? nA : nB} is the more career-driven`);
+      if (socGap >= 30) bits.push(`${A.bigE > B.bigE ? nA : nB} is the more socially energetic`);
+      const detail = bits.length ? ` — ${bits.join(', ')}` : '';
+      let tip;
+      if (socGap >= ambGap && socGap >= 30) {
+        const hi = A.bigE > B.bigE ? nA : nB, lo = hi === nA ? nB : nA;
+        tip = `${hi}: plan social time with ${lo}'s energy in mind. ${lo}: say when you need a quiet night rather than pushing through.`;
+      } else if (ambGap >= 30) {
+        const hi = A.ambTrait > B.ambTrait ? nA : nB, lo = hi === nA ? nB : nA;
+        tip = `${hi}: protect shared downtime so drive doesn't crowd you out. ${lo}: back ${hi}'s goals rather than feeling measured against them.`;
+      } else {
+        tip = 'Agree on rhythms — going out vs staying in, how much ambition matters — before they become a recurring negotiation.';
       }
-      if (gap(A.bigE, B.bigE) >= 30) {
-        const hi = A.bigE > B.bigE ? nA : nB; bits.push(`${hi} is the more socially energetic`);
-      }
-      const detail = bits.length ? ` (${bits.join(', ')})` : '';
-      return { meaning: `Your everyday rhythms run at different speeds${detail} — fine with a few explicit agreements about time and energy.`,
-               tip: 'Agree on rhythms — going out versus staying in, how much drive matters — before they become a recurring negotiation.' };
+      return { meaning: `Your everyday rhythms run at different speeds${detail} — fine with a few explicit agreements about time and energy.`, tip };
     }
 
     default: return { meaning: '', tip: '' };
@@ -342,16 +417,19 @@ function matchPair(personA, personB) {
   };
 
   // Weighted overall over answered dimensions only (engine sums all 7).
-  let wSum = 0, wxSum = 0;
-  for (const d of DIMENSIONS) {
-    const m = perDim[d.code];
-    if (m === null) continue;
-    const w = ENGINE.weights[d.code];
-    wSum += w; wxSum += m * w;
-  }
+  // Bidirectional + personalised: each person scores the SAME per-dimension fits by
+  // their OWN priority weights (blended with the baseline); the two perspectives are
+  // averaged. If neither ranked anything, both weight vectors = baseline, so this is
+  // identical to the plain baseline weighted mean (verified backward-compatible).
+  const fitA = weightedFit(perDim, blendedWeights(A.prefRank));
+  const fitB = weightedFit(perDim, blendedWeights(B.prefRank));
+  const rawMean = (fitA === null || fitB === null) ? null : (fitA + fitB) / 2;
   // Always compute the underlying score (even when gated) so the admin can still
   // open a full report. `blocked` just flags it + carries the reason.
-  const overall = !wSum ? null : Math.round(wxSum / wSum);
+  // Final spread-curve stretches the compressed weighted mean so scores discriminate
+  // (a mean of 7 capped dims clusters ~0.42× as wide as its parts — see engine-config).
+  const SP = ENGINE.spread;
+  const overall = rawMean === null ? null : clampR(SP.displayMid + (rawMean - SP.rawCenter) * SP.gain);
 
   // Per-dimension report band + dynamic, pairing-specific text
   const dims = DIMENSIONS.map(d => {

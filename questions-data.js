@@ -78,6 +78,23 @@ const QUESTION_GROUPS = [
 // Flat list (in canonical 1–20 order) for convenience.
 const QUESTIONS = QUESTION_GROUPS.flatMap(g => g.questions).sort((a, b) => a.n - b.n);
 
+/* ── Personal priorities (optional weighting) ────────────────────────────────
+   The person ranks their top three dimensions; codes are stored in PREF_W1..W3
+   and feed scores.prefRank, which tilts their match weights toward what they
+   value (blended with the science baseline — see engine-config prefBlend).
+   Codes MUST match DIMENSIONS in engine-config.js.
+   ─────────────────────────────────────────────────────────────────────────── */
+const PRIORITY_DIMS = [
+  { code: 'ATT', label: 'Attachment & security', def: 'How you experience trust, closeness and security with a partner.' },
+  { code: 'COM', label: 'Communication',          def: 'How you raise issues, express feelings and handle conflict.' },
+  { code: 'POL', label: 'Attraction & polarity',  def: "Whether you're drawn to someone similar to you, or someone who contrasts and complements you." },
+  { code: 'INT', label: 'Intimacy & affection',   def: 'How central physical chemistry and affection are to how you bond.' },
+  { code: 'VAL', label: 'Values & outlook',       def: 'How much sharing core values and a life outlook matters to you.' },
+  { code: 'DRV', label: 'Relationship drive',     def: 'What a relationship is fundamentally for you — building a life, companionship, growth, being truly known.' },
+  { code: 'LIF', label: 'Lifestyle & rhythm',     def: 'Day-to-day fit — social energy, ambition and how you like to spend your time.' }
+];
+const PRIORITY_FIELDS = ['PREF_W1', 'PREF_W2', 'PREF_W3']; // store dimension codes, rank 1→3
+
 /* ── Hard filters (Build & Beta Pack ②) ─────────────────────────────────────
    field   → matches the engine ① INPUT header where one exists.
    mandate → 'M' (needed to match, enforced before submit) or 'O' (optional).
@@ -118,5 +135,5 @@ const HARD_FILTERS = [
 const MANDATORY_FILTERS = HARD_FILTERS.filter(f => f.mandate === 'M').map(f => f.id);
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { QUESTION_GROUPS, QUESTIONS, HARD_FILTERS, MANDATORY_FILTERS, SCALE_5 };
+  module.exports = { QUESTION_GROUPS, QUESTIONS, HARD_FILTERS, MANDATORY_FILTERS, SCALE_5, PRIORITY_DIMS, PRIORITY_FIELDS };
 }

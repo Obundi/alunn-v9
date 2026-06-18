@@ -696,6 +696,25 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 }
 
 /* ── Mobile ── */
+/* Priorities step — dimension definitions */
+.priority-defs {
+  list-style: none;
+  margin: 4px 0 20px;
+  padding: 16px 18px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.priority-defs li {
+  font-size: 0.86rem;
+  color: var(--mid);
+  line-height: 1.45;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(26,16,37,0.06);
+}
+.priority-defs li:last-child { border-bottom: none; }
+.priority-defs strong { color: var(--forest); }
+
 @media (max-width: 480px) {
   .card { padding: 28px 20px; margin-top: 36px; }
   h1 { font-size: 1.45rem; }
