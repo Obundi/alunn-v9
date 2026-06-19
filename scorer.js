@@ -364,7 +364,7 @@ function profileReportHTML(report) {
   return `
     <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
     <h2>Your profile</h2>
-    <p class="screen-intro-text">Here's what your answers say about how you connect. A starting point for reflection — not a verdict.</p>
+    <p class="screen-intro-text">Here's what your answers say about how you connect ✨ A starting point for reflection — not a verdict.</p>
     <div class="report-chart-card">
       <p class="report-name">${who}</p>
       <p class="chart-title">Your dimensions</p>
