@@ -13,64 +13,64 @@ const SCALE_5 = ['1', '2', '3', '4', '5'];
 const QUESTION_GROUPS = [
   {
     title: 'Attachment',
-    intro: '<strong>Attachment</strong> is how you experience closeness, trust and security with a partner — the single strongest predictor of how a relationship feels day to day. There are no right answers; just go with your gut.',
+    intro: 'First, how you connect. These are about closeness and trust — the stuff that quietly shapes how a relationship <em>feels</em>. No right answers, and honestly most people are a mix. Just go with your gut. 💛',
     questions: [
-      { n: 1,  field: 'ATT_C01', type: 'scale', text: 'I feel comfortable depending on others in close relationships.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 4,  field: 'ATT_C05', type: 'scale', text: 'I often worry about being abandoned by someone I love.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 7,  field: 'ATT_C06', type: 'scale', text: 'When someone gets too close, I feel the urge to pull back.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 11, field: 'ATT_C02', type: 'scale', text: "I worry that people I care about don't value me as much as I value them.", anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 14, field: 'ATT_C10', type: 'scale', text: 'I generally trust that my partners have good intentions toward me.', anchors: ['Strongly disagree', 'Strongly agree'] }
+      { n: 1,  field: 'ATT_C01', type: 'scale', text: "I'm comfortable leaning on the people I'm close to.", anchors: ['Not me at all', 'Totally me'] },
+      { n: 4,  field: 'ATT_C05', type: 'scale', text: "If someone I'm close to needs space, part of me worries they're pulling away.", anchors: ['Not me at all', 'Totally me'] },
+      { n: 7,  field: 'ATT_C06', type: 'scale', text: 'When things get really close, a bit of me wants some breathing room.', anchors: ['Not me at all', 'Totally me'] },
+      { n: 11, field: 'ATT_C02', type: 'scale', text: 'I sometimes wonder if I care about people more than they care about me.', anchors: ['Not me at all', 'Totally me'] },
+      { n: 14, field: 'ATT_C10', type: 'scale', text: 'I tend to trust that a partner means well.', anchors: ['Not me at all', 'Totally me'] }
     ]
   },
   {
     title: 'Communication',
-    intro: '<strong>Communication</strong> is how you raise issues, process feelings and handle conflict. Partners rarely fail because they disagree — it\'s usually about <em>how</em> they talk when they do.',
+    intro: "Now, how you talk things through. Couples rarely come unstuck because they disagree — it's <em>how</em> they handle it. There's no best style here, just yours. 💬",
     questions: [
-      { n: 2,  field: 'COM_C01', type: 'scale', text: 'When there is a problem I prefer to address it directly and immediately.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 8,  field: 'COM_C02', type: 'scale', text: 'I need to talk through my feelings out loud in order to properly process them.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 13, field: 'COM_C04', type: 'scale', text: 'I tend to prioritise keeping the peace over raising an issue that might cause conflict.', anchors: ['Strongly disagree', 'Strongly agree'] },
-      { n: 16, field: 'COM_C03', type: 'scale', text: 'I need to fully think a problem through on my own before I can talk it through with a partner.', anchors: ['Strongly disagree', 'Strongly agree'] }
+      { n: 2,  field: 'COM_C01', type: 'scale', text: "When something's bugging me, I'd rather bring it up than sit on it.", anchors: ['Not me at all', 'Totally me'] },
+      { n: 8,  field: 'COM_C02', type: 'scale', text: 'I figure out how I feel by talking it out, not by going quiet.', anchors: ['Not me at all', 'Totally me'] },
+      { n: 13, field: 'COM_C04', type: 'scale', text: "I'll often keep the peace rather than start a disagreement.", anchors: ['Not me at all', 'Totally me'] },
+      { n: 16, field: 'COM_C03', type: 'scale', text: "I need to think things over on my own before I'm ready to talk about them.", anchors: ['Not me at all', 'Totally me'] }
     ]
   },
   {
-    title: 'What attracts you',
-    intro: '<strong>Attraction polarity</strong> is whether you\'re drawn to someone <em>similar</em> to you or someone who <em>complements and contrasts</em> you. Both can work — knowing your pull helps us match you well. Pick the option that feels most true.',
+    title: 'What draws you in',
+    intro: 'Opposites attract — or do they? Some of us click with someone <em>similar</em>, others with a bit of <em>contrast</em>. Both work. Pick what feels true for you. ✨',
     questions: [
-      { n: 3,  field: 'POL_C06', type: 'choice', text: 'Overall, the best long-term relationship for me would be with someone who:',
-        options: [{ v: 'A', label: 'Reinforces who I already am' }, { v: 'B', label: 'Balances me' }, { v: 'C', label: 'Challenges me by being genuinely different' }] },
-      { n: 6,  field: 'POL_C01', type: 'choice', text: 'Thinking about past relationships, you were most attracted to someone who was:',
-        options: [{ v: 'A', label: 'Very similar to me' }, { v: 'B', label: 'A mix of both' }, { v: 'C', label: 'Quite different from me' }] },
-      { n: 9,  field: 'POL_C04', type: 'choice', text: 'On ambition and drive, I am most attracted to someone who:',
-        options: [{ v: 'A', label: 'Matches my pace' }, { v: 'B', label: 'Is somewhat more / less ambitious' }, { v: 'C', label: 'Is very different in drive' }] },
-      { n: 12, field: 'POL_C03', type: 'choice', text: 'On social energy and lifestyle, I am most attracted to someone who is:',
-        options: [{ v: 'A', label: 'About the same as me' }, { v: 'B', label: 'Somewhat different' }, { v: 'C', label: 'Very different (e.g. introvert / extrovert)' }] }
+      { n: 3,  field: 'POL_C06', type: 'choice', text: 'The best relationship for me would be with someone who:',
+        options: [{ v: 'A', label: 'Feels a lot like me' }, { v: 'B', label: 'Balances me out — a bit of both' }, { v: 'C', label: 'Is refreshingly different' }] },
+      { n: 6,  field: 'POL_C01', type: 'choice', text: "Looking back, I've usually been drawn to someone who was:",
+        options: [{ v: 'A', label: 'A lot like me' }, { v: 'B', label: 'A bit of both' }, { v: 'C', label: 'Pretty different from me' }] },
+      { n: 9,  field: 'POL_C04', type: 'choice', text: 'When it comes to drive and ambition, I click with someone who:',
+        options: [{ v: 'A', label: 'Has about the same drive as me' }, { v: 'B', label: 'Is a bit more or less driven' }, { v: 'C', label: 'Runs at a totally different speed' }] },
+      { n: 12, field: 'POL_C03', type: 'choice', text: "On social energy, I'm drawn to someone who's:",
+        options: [{ v: 'A', label: 'About as social as me' }, { v: 'B', label: 'A bit more or less social' }, { v: 'C', label: 'My opposite (introvert vs extrovert)' }] }
     ]
   },
   {
-    title: 'Intimacy & affection',
-    intro: '<strong>Intimacy</strong> is how central physical chemistry and affection are to how you bond. There\'s no better or worse here — just how strong this need runs for you, so we can match you with someone on a similar wavelength.',
+    title: 'Closeness & affection',
+    intro: "How much do touch and chemistry matter to <em>you</em>? There's no high or low to aim for — we just want to match you with someone on your wavelength. 💞",
     questions: [
-      { n: 10, field: 'INT_T201', type: 'scale', text: 'How important is physical chemistry and sexual compatibility to you in a long-term partner?', anchors: ['Not important', 'Essential'] },
-      { n: 17, field: 'INT_T202', type: 'scale', text: 'I need regular physical affection (touch, closeness) to feel connected in a relationship.', anchors: ['Strongly disagree', 'Strongly agree'] }
+      { n: 10, field: 'INT_T201', type: 'scale', text: 'How much does physical chemistry matter to you in a relationship?', anchors: ['Not important', 'Essential'] },
+      { n: 17, field: 'INT_T202', type: 'scale', text: 'I need regular affection — touch, closeness — to feel connected.', anchors: ['Not me at all', 'Totally me'] }
     ]
   },
   {
-    title: 'Relationship drive',
-    intro: '<strong>Relationship drive</strong> is what a relationship is fundamentally <em>for</em>, to you — building a life, easy companionship, shared growth, or deep understanding. Partners thrive when their core drives line up.',
+    title: 'What you want it for',
+    intro: "Deep down, what's a relationship <em>for</em>, to you? Building something, easy companionship, growing together, being truly known — they're all good answers. 🌱",
     questions: [
-      { n: 5,  field: 'DRV_C01', type: 'choice', text: 'The relationship scenario that excites you most is:',
-        options: [{ v: 'A', label: 'Building a life together' }, { v: 'B', label: 'Deep friendship' }, { v: 'C', label: 'Growth and adventure' }, { v: 'D', label: 'Being truly known' }] },
-      { n: 15, field: 'DRV_C03', type: 'choice', text: 'What would make you most fulfilled in a long-term relationship is:',
-        options: [{ v: 'A', label: 'Achieving things together' }, { v: 'B', label: 'Simply being together' }, { v: 'C', label: 'Growing together' }, { v: 'D', label: 'Understanding each other deeply' }] }
+      { n: 5,  field: 'DRV_C01', type: 'choice', text: 'The kind of relationship that excites me most is:',
+        options: [{ v: 'A', label: 'Building a future together — a home, goals, maybe family' }, { v: 'B', label: 'Easy companionship — my favourite person to just be with' }, { v: 'C', label: 'Adventure and new experiences together' }, { v: 'D', label: 'A deep bond where we really get each other' }] },
+      { n: 15, field: 'DRV_C03', type: 'choice', text: 'What would make me happiest long-term is:',
+        options: [{ v: 'A', label: 'Achieving big things as a team' }, { v: 'B', label: 'Comfortable, drama-free togetherness' }, { v: 'C', label: 'Always having something new to explore together' }, { v: 'D', label: 'Feeling completely seen and understood' }] }
     ]
   },
   {
-    title: 'You & your outlook',
-    intro: 'Last few. These describe <strong>you</strong> — your social energy, ambition and core values. We compare them with what you find attractive (and with potential partners) to calibrate your matches.',
+    title: 'A little about you',
+    intro: 'Last stretch! 🎉 A few about <em>you</em> — your energy, drive and outlook. We line these up with what you find attractive (and with potential matches).',
     questions: [
-      { n: 18, field: 'BIG_C03', type: 'scale', text: 'I feel genuinely energised by socialising and spending time with groups of people.', anchors: ['Never', 'Always'] },
-      { n: 19, field: 'LIF_T103', type: 'scale', text: 'How career-ambitious are you yourself?', anchors: ['Not at all', 'Very ambitious'] },
-      { n: 20, field: 'VAL_C01', type: 'scale', text: 'My overall outlook on life and core values lean:', anchors: ['Traditional', 'Progressive'] }
+      { n: 18, field: 'BIG_C03', type: 'scale', text: 'Being around people and groups genuinely energises me.', anchors: ['Not me at all', 'Totally me'] },
+      { n: 19, field: 'LIF_T103', type: 'scale', text: 'How driven are you about your career and goals?', anchors: ['Not at all', 'Very driven'] },
+      { n: 20, field: 'VAL_C01', type: 'scale', text: 'When it comes to life and values, I lean:', anchors: ['More traditional', 'More progressive'] }
     ]
   }
 ];
