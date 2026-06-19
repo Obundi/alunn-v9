@@ -41,14 +41,18 @@ out.join('\n');
 function mkPerson(pid){var raw=people[pid];var f={};['Gender','Orientation','LookingFor','Intent','RelType','WantKids','AgeMin','AgeMax','City','HasKids','OpenToKids','Religion','RelImportance'].forEach(function(k){f[k]=raw[k];});return {name:raw.Name,filters:f,scores:scoreAnswers(raw)};}
 // Post-recalibration expectations (decompressed dims + polarity spread + final spread-curve).
 var mr=matchPair(mkPerson('P01'),mkPerson('P02'));
-var mfails=0;var exp={ATT:55,COM:83,POL:85,INT:100,VAL:85,DRV:44,LIF:80};
+var mfails=0;var exp={ATT:78,COM:83,POL:85,INT:100,VAL:85,DRV:44,LIF:80};
 ['ATT','COM','POL','INT','VAL','DRV','LIF'].forEach(function(c){if(mr.perDim[c]!==exp[c]){mfails++;}});
-if(mr.overall!==68)mfails++; if(mr.stars!=='★★★½')mfails++;
+if(mr.overall!==80)mfails++; if(mr.stars!=='★★★★★')mfails++;
 var tail = '\nMATCH Alex×Sam: overall='+mr.overall+' stars='+mr.stars+(mfails?' ('+mfails+' MATCH MISMATCHES)':' OK');
 
 /* ── personal-weight check: no prefs == baseline; with prefs it shifts ── */
-var alexPref=mkPerson('P01'); alexPref.scores.prefRank=['VAL','LIF','COM'];
-var prefMr=matchPair(alexPref, mkPerson('P02'));
-var pcheck=(mr.overall===68 && prefMr.overall!==null && prefMr.overall!==68)?' OK':' CHECK';
-var prefTail='\nPREF  Alex×Sam: no-prefs='+mr.overall+' (baseline) -> Alex prioritises VAL,LIF,COM='+prefMr.overall+pcheck;
+// Robust weighting check: a ranked dim rises, an unranked one (ATT) falls, baseline unchanged.
+var wB=blendedWeights(null), wP=blendedWeights(['VAL','LIF','COM']);
+var pcheck=(wB.ATT===ENGINE.weights.ATT && wP.VAL>wB.VAL && wP.ATT<wB.ATT)?' OK':' CHECK';
+// And a pair whose perspectives diverge (Alex prioritises DRV — his weakest dim vs Sam).
+var ap=mkPerson('P01'); ap.scores.prefRank=['DRV','POL','LIF'];
+var dm=matchPair(ap, mkPerson('P02'));
+var prefTail='\nPREF  weights VAL '+wB.VAL+'→'+wP.VAL.toFixed(1)+', ATT '+wB.ATT+'→'+wP.ATT.toFixed(1)+pcheck+
+  '  | Alex prioritises DRV × Sam: persp '+dm.perspA+'/'+dm.perspB+' overall '+dm.overall+(mr.perspA===mr.perspB?' (no-prefs persp '+mr.perspA+'=both)':'');
 out.join('\n')+tail+prefTail;

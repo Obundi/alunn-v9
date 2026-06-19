@@ -43,7 +43,7 @@ const ENGINE = {
           score discriminates (target: mean≈62, SD≈12 on the sim population).
      All numbers live HERE so the engine stays recalibratable from one place. */
   matchScale: {
-    attSlope: 1.0, attSecureFloor: 55,   // Attachment: distance slope (was 0.7) + Secure-pair floor (was 72)
+    // Attachment now uses attMatrix (above), not a distance/floor — see attMatch().
     comLo: 38, comHi: 92,                 // Communication style-matrix remap (was effective 55..85)
     drvLo: 40, drvHi: 90,                 // Drive type-matrix remap (was effective 60..85)
     intSlope: 1.0, lifSlope: 1.0,         // Intimacy / Lifestyle distance slopes (were 0.8)
@@ -83,6 +83,21 @@ const ENGINE = {
     Companion: { Builder: 65, Companion: 85, Explorer: 60, Nurturer: 85 },
     Explorer:  { Builder: 80, Companion: 60, Explorer: 80, Nurturer: 60 },
     Nurturer:  { Builder: 60, Companion: 85, Explorer: 60, Nurturer: 85 }
+  },
+
+  /* ── Attachment-style pair matrix (theory-based) ────────────────────────────
+     Scores the COMBINATION of attachment styles directly, instead of the distance
+     between composite scores (which collapsed Anxious≈Avoidant to the same number
+     and mis-scored that classic pursue/withdraw pairing as a perfect match).
+     Secure stabilises almost any pairing; Anxious×Avoidant is the danger combo;
+     two-of-a-kind insecure pairs are mediocre, not perfect. Symmetric.
+     Styles come from scorer.js: Secure / Anxious / Avoidant / Fearful / Mixed. */
+  attMatrix: {
+    Secure:   { Secure: 98, Anxious: 78, Avoidant: 75, Fearful: 68, Mixed: 82 },
+    Anxious:  { Secure: 78, Anxious: 60, Avoidant: 35, Fearful: 42, Mixed: 60 },
+    Avoidant: { Secure: 75, Anxious: 35, Avoidant: 55, Fearful: 40, Mixed: 58 },
+    Fearful:  { Secure: 68, Anxious: 42, Avoidant: 40, Fearful: 38, Mixed: 50 },
+    Mixed:    { Secure: 82, Anxious: 60, Avoidant: 58, Fearful: 50, Mixed: 65 }
   },
 
   /* ── Subscale → field codes (from ③ EFF column ranges) ─────────────────── */

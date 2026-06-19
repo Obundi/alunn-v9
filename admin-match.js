@@ -58,11 +58,13 @@ function polarityMatch(A, B) {
 
 /* ── Other dimension matches (§6.2) ─────────────────────────────────────────*/
 function attMatch(A, B) {
-  if (A.attComp === null || B.attComp === null) return null;
-  const MS = ENGINE.matchScale;
-  const base = 100 - MS.attSlope * Math.abs(A.attComp - B.attComp);
-  const eitherSecure = A.attStyle === 'Secure' || B.attStyle === 'Secure';
-  return clampR(eitherSecure ? Math.max(MS.attSecureFloor, base) : Math.max(0, base));
+  // Theory-based style-pair matrix (see engine-config attMatrix). Scores the
+  // combination of attachment styles directly — so Anxious×Avoidant is correctly
+  // a low match, not the perfect score the old composite-distance method gave it.
+  if (!A.attStyle || !B.attStyle) return null;            // partial-safe
+  const row = ENGINE.attMatrix[A.attStyle];
+  if (!row || row[B.attStyle] === undefined) return null;  // unknown style ⇒ skip dim
+  return clampR(row[B.attStyle]);
 }
 
 function comMatch(A, B) {
