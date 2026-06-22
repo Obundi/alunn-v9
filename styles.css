@@ -27,6 +27,10 @@ body {
   padding: 0 16px 80px;
 }
 
+/* Constrain the assessment to a readable, centred column on wide screens
+   (naturally full-width on mobile, below this cap). */
+#app { width: 100%; max-width: 600px; }
+
 /* ── Progress bar ── */
 #progress-bar-wrap {
   position: fixed;
@@ -295,7 +299,8 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 }
 
 .scale-option { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
-.scale-option input[type="radio"] { display: none; }
+/* Visually hidden but still keyboard-focusable (was display:none, which dropped it from tab order). */
+.scale-option input[type="radio"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .scale-option .scale-btn {
   width: 44px; height: 44px;
   border-radius: 50%;
@@ -319,7 +324,7 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
 
 /* ── Choice question ── */
 .choice-options { display: flex; flex-direction: column; gap: 10px; }
-.choice-option input[type="radio"] { display: none; }
+.choice-option input[type="radio"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .choice-option label {
   display: block;
   padding: 13px 18px;
@@ -354,6 +359,18 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
   color: var(--dark);
   cursor: pointer;
   line-height: 1.4;
+}
+
+/* ── Accessibility: visible keyboard focus (only shows for keyboard users) ── */
+a:focus-visible, button:focus-visible, .btn:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+.scale-option input[type="radio"]:focus-visible + .scale-btn,
+.choice-option input[type="radio"]:focus-visible + label {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
 }
 
 /* ── Error highlight ── */
@@ -685,6 +702,7 @@ a.btn.btn-secondary, a.btn.btn-secondary:visited { color: var(--forest); }
   /* Print background colours / white text on the coloured report cards. */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { background: white; padding: 0; }
+  #app { max-width: none; }   /* full-width profile in the PDF */
   #progress-bar-wrap, .btn, .step-counter, .screen-intro-text, .report-note { display: none !important; }
   .fb-embed { display: none !important; }   /* keep the inline feedback OUT of the saved PDF */
   .card { box-shadow: none; border: none; margin-top: 0; padding: 20px 0; max-width: 100%; }

@@ -147,9 +147,9 @@ function init() {
     return `<div class="field"><label>${lbl} <span class="req">*</span></label><select id="pref-${n}" data-field="PREF_W${n}">${opts}</select></div>`;
   };
   priority.innerHTML = `${logoHtml(true)}
-    <p class="step-counter">Last step — your priorities</p>
+    <p class="step-counter">Part ${QUESTION_GROUPS.length + 1} of ${QUESTION_GROUPS.length + 1} — your priorities</p>
     <h2>What matters most to you?</h2>
-    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Everyone weighs compatibility differently. Tell us which dimensions matter <strong>most to you</strong> and we'll tilt your matches toward them — on top of the science, never instead of it. Pick your <strong>top three, in order</strong>.</div></div>
+    <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Everyone weighs compatibility differently. Tell us which dimensions matter <strong>most to you</strong> and we'll tilt your matches toward them — on top of the science, never instead of it. Pick your <strong>top three, in order</strong>. There's no wrong answer here — just go with what feels most important to you right now. 🙂</div></div>
     <ul class="priority-defs">${dimList}</ul>
     ${prefSelect(1, '1 — Most important')}
     ${prefSelect(2, '2 — Second')}
@@ -182,7 +182,7 @@ function init() {
 function buildQScreen(app, group, stepNum) {
   const screen = makeScreen('screen-q-' + stepNum);
   const part = stepNum - 1; // question groups start at screen index 2 → Part 1
-  const total = QUESTION_GROUPS.length;
+  const total = QUESTION_GROUPS.length + 1; // +1 so the priorities step is the final part
   const qsHtml = group.questions.map(q => q.type === 'scale' ? renderScale(q) : renderChoice(q)).join('');
   screen.innerHTML = `${logoHtml(true)}
     <p class="step-counter">Part ${part} of ${total}</p>
@@ -389,8 +389,10 @@ function renderProfile(report) {
   // The .fb-embed wrapper is hidden in print, so a saved PDF contains ONLY the profile.
   el.innerHTML = profileReportHTML(report) + `
     <div class="fb-embed">
+      <div class="section-divider">What this means</div>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Think of this as a mirror, not a score to beat — it shows how you <em>tend</em> to connect, your strengths and your growth edges. Use it to notice what rings true and how you want to show up with a partner. Alunn is being built to match you on exactly this kind of real compatibility — how you connect, not just how you look — so two people can see how they fit <em>before</em> they invest. Your honest reactions below are what shape it. 💛</div></div>
       <div class="section-divider">Before you go</div>
-      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Does this profile actually feel like you? Your honest reactions — where it's spot on and where it's off — are the most valuable thing you can give this beta. 🙏</div></div>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Does this profile actually feel like you? Where it's spot on and where it's off — that's the most valuable thing you can give this beta. 🙏</div></div>
       <div id="profile-fb-mount"></div>
     </div>`;
   animateProfileBars(el);

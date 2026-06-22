@@ -87,14 +87,21 @@
   <div class="card">
     <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
     <h2>Admin · v9</h2>
+    <button class="btn btn-secondary" id="btn-refresh" onclick="refreshData()" style="max-width:180px;padding:7px 14px;font-size:0.82rem;margin:0 0 14px;">↻ Refresh data</button>
     <div class="admin-tabs">
-      <div class="admin-tab active" onclick="switchTab('tab-top')">Top Matches</div>
+      <div class="admin-tab active" onclick="switchTab('tab-dashboard')">Dashboard</div>
+      <div class="admin-tab" onclick="switchTab('tab-top')">Top Matches</div>
       <div class="admin-tab" onclick="switchTab('tab-match')">Match Report</div>
       <div class="admin-tab" onclick="switchTab('tab-profile')">Profile Report</div>
       <div class="admin-tab" onclick="switchTab('tab-insights')">Insights</div>
     </div>
 
-    <div id="tab-top" class="tab-panel active">
+    <div id="tab-dashboard" class="tab-panel active">
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>A quick pulse of your beta — who's signed up and how much feedback has come in. Use <strong>↻ Refresh data</strong> for the latest.</div></div>
+      <div id="dash-result"><div class="top-count">Loading…</div></div>
+    </div>
+
+    <div id="tab-top" class="tab-panel">
       <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Enter a person's email to rank everyone else by compatibility, then filter and sort the list below. Incompatible people (hard-filter conflicts) and below-threshold matches are hidden unless you tick "Show gated/low".</div></div>
       <div class="field"><label for="top-email">Person — email</label>
         <input type="email" id="top-email" placeholder="person@example.com"></div>

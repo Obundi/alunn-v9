@@ -33,6 +33,7 @@ async function checkPin() {
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('admin-screen').style.display = 'block';
     document.getElementById('admin-screen').classList.add('active');
+    renderDashboard();   // show the pulse the moment you unlock
   } catch (e) {
     err.textContent = 'Could not reach the backend — check your connection and the URL in config.js.';
     err.style.display = 'block';
@@ -338,6 +339,7 @@ function renderMatchReport(m, emailA, emailB) {
       ${perspLine}
     </div>
     ${gateBanner}
+    <div class="report-card"><div class="report-section"><div class="report-section-label">How to read this</div><p class="report-body">The score and stars show how well your foundations line up across the dimensions below — a higher number means fewer natural friction points, not a promise. Read it as a starting point for understanding each other, not a verdict. Each dimension shows where you naturally click and where a little awareness goes a long way.</p></div></div>
     <div class="report-chart-card"><p class="chart-title">By dimension</p><div class="dim-bars">${bars}</div></div>
     <div class="report-card">${sections}</div>
     <p class="report-disclaimer">For guidance and reflection only — not a clinical assessment or a prediction of any outcome.</p>
@@ -381,6 +383,73 @@ function renderAdminProfile(report) {
   // EXACT same profile as the user gets — one shared renderer (scorer.js).
   el.innerHTML = profileReportHTML(report);
   animateProfileBars(el);
+}
+
+/* ── Tab 0: Dashboard (pulse) ───────────────────────────────────────────────*/
+function dashStat(num, label) {
+  return `<div style="flex:1;min-width:120px;background:var(--cream);border-radius:12px;padding:16px;text-align:center;">
+    <div style="font-family:Georgia,serif;font-size:1.9rem;font-weight:700;color:var(--forest);">${num}</div>
+    <div style="font-size:0.78rem;color:var(--mid);margin-top:4px;">${escA(label)}</div></div>`;
+}
+function dashRows(obj, pct, total) {
+  const keys = Object.keys(obj).sort((a, b) => obj[b] - obj[a]);
+  if (!keys.length) return '<span class="top-count">—</span>';
+  return keys.map(k => `<div style="display:flex;justify-content:space-between;font-size:0.85rem;margin:3px 0;"><span>${escA(k)}</span><span class="org">${obj[k]}${pct && total ? ' (' + Math.round(obj[k] / total * 100) + '%)' : ''}</span></div>`).join('');
+}
+function dashHTML() {
+  const ppl = ALL_PEOPLE || [];
+  const n = ppl.length;
+  const wk = Date.now() - 7 * 86400000;
+  const last7 = ppl.filter(p => { const t = tsOf(p); return t && t >= wk; }).length;
+  const g = {}; ppl.forEach(p => { const k = (p.filters.Gender || '—').toString().trim() || '—'; g[k] = (g[k] || 0) + 1; });
+  const c = {}; ppl.forEach(p => { const k = (p.filters.City || '').toString().trim(); if (k) c[k] = (c[k] || 0) + 1; });
+  const cTop = {}; Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 5).forEach(k => cTop[k] = c[k]);
+  let fb;
+  if (ALL_FEEDBACK) {
+    const fa = (ALL_FEEDBACK.fb_assessment || []).length, fp = (ALL_FEEDBACK.fb_profile || []).length, fm = (ALL_FEEDBACK.fb_match || []).length;
+    const demo = insDemoMap();
+    const uniqA = [...new Set((ALL_FEEDBACK.fb_assessment || []).map(r => (r.email || '').trim().toLowerCase()).filter(Boolean))];
+    const matchedA = uniqA.filter(e => demo[e]).length;
+    const rate = n ? Math.round(matchedA / n * 100) : 0;
+    fb = `<div style="display:flex;gap:10px;flex-wrap:wrap;">${dashStat(fa, 'Assessment')}${dashStat(fp, 'Profile')}${dashStat(fm, 'Match')}</div>
+      <div class="top-count" style="margin-top:6px;">${rate}% of finishers gave assessment feedback</div>`;
+  } else { fb = '<div class="top-count">Loading…</div>'; }
+  return `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">${dashStat(n, 'Assessments completed')}${dashStat(last7, 'New (last 7 days)')}</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;">
+      <div style="flex:1;min-width:180px;"><div class="result-header">Gender</div>${dashRows(g, true, n)}</div>
+      <div style="flex:1;min-width:180px;"><div class="result-header">Top cities</div>${dashRows(cTop, false)}</div>
+    </div>
+    <div style="margin-top:18px;"><div class="result-header">Feedback collected</div>${fb}</div>`;
+}
+async function renderDashboard() {
+  const el = document.getElementById('dash-result'); if (!el) return;
+  if (!ALL_PEOPLE) { try { await loadAllPeople(); } catch (e) { el.innerHTML = '<div class="error-msg visible">Could not load data.</div>'; return; } }
+  el.innerHTML = dashHTML();
+  if (!ALL_FEEDBACK) {
+    try {
+      const r = await fetch(`${APPS_SCRIPT_URL}?action=getfeedback&token=${encodeURIComponent(ADMIN_TOKEN_SESSION)}`);
+      const d = await r.json(); if (!(d && d.ok === false)) { ALL_FEEDBACK = d; el.innerHTML = dashHTML(); }
+    } catch (e) { /* leave the people metrics; feedback just stays "Loading…" */ }
+  }
+}
+
+// Clear cached data and re-run whatever's on screen (so new submissions show up
+// without a full page reload).
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+  ALL_PEOPLE = null; ALL_FEEDBACK = null; TOP = null;
+  try {
+    await loadAllPeople();
+    const active = document.querySelector('.tab-panel.active');
+    const id = active ? active.id : '';
+    if (id === 'tab-dashboard') await renderDashboard();
+    else if (id === 'tab-insights' && document.getElementById('ins-output')) await loadInsights();
+    else if (id === 'tab-top' && document.getElementById('top-email').value.trim()) await findTopMatches();
+    // match/profile tabs re-fetch on their own next action
+  } catch (e) { /* surfaced by the individual loaders */ }
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Refreshed ✓'; setTimeout(() => { btn.textContent = '↻ Refresh data'; }, 1500); }
 }
 
 // Allow Enter on the PIN field.

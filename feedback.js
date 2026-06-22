@@ -47,7 +47,7 @@ const FORMS = {
       },
       {
         "n": 5,
-        "q": "Did any questions feel too personal or uncomfortable?",
+        "q": "Did anything feel too personal?",
         "t": "single",
         "o": [
           "Not at all",
@@ -89,7 +89,7 @@ const FORMS = {
       },
       {
         "n": 9,
-        "q": "How many up-front questions feels acceptable to you?",
+        "q": "How many questions up front feels okay to you?",
         "t": "single",
         "o": [
           "Under 10",
@@ -132,7 +132,7 @@ const FORMS = {
       },
       {
         "n": 2,
-        "q": "Accuracy — Attachment style",
+        "q": "How well did the Attachment part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -144,7 +144,7 @@ const FORMS = {
       },
       {
         "n": 3,
-        "q": "Accuracy — Communication style",
+        "q": "How well did the Communication part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -156,7 +156,7 @@ const FORMS = {
       },
       {
         "n": 4,
-        "q": "Accuracy — Attraction (what draws you to a partner)",
+        "q": "How well did the Attraction part — what draws you to a partner — fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -168,7 +168,7 @@ const FORMS = {
       },
       {
         "n": 5,
-        "q": "Accuracy — Intimacy needs",
+        "q": "How well did the Intimacy part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -180,7 +180,7 @@ const FORMS = {
       },
       {
         "n": 6,
-        "q": "Accuracy — Values",
+        "q": "How well did the Values part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -192,7 +192,7 @@ const FORMS = {
       },
       {
         "n": 7,
-        "q": "Accuracy — Relationship drive / goals",
+        "q": "How well did the Relationship drive part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -204,7 +204,7 @@ const FORMS = {
       },
       {
         "n": 8,
-        "q": "Accuracy — Lifestyle",
+        "q": "How well did the Lifestyle part fit you?",
         "t": "single",
         "o": [
           "Spot on",
@@ -216,7 +216,7 @@ const FORMS = {
       },
       {
         "n": 9,
-        "q": "My main result (e.g. your attachment style / drive type) felt…",
+        "q": "Your main result — your attachment style, drive type, and so on — felt…",
         "t": "single",
         "o": [
           "Spot on",
@@ -262,7 +262,7 @@ const FORMS = {
       },
       {
         "n": 13,
-        "q": "The report length / readability was…",
+        "q": "How was the length and readability?",
         "t": "single",
         "o": [
           "Too short",
@@ -273,7 +273,7 @@ const FORMS = {
       },
       {
         "n": 14,
-        "q": "I'd trust this to give me better matches than a normal app.",
+        "q": "I'd trust this to find me better matches than a typical app.",
         "t": "scale"
       },
       {
@@ -401,7 +401,7 @@ const FORMS = {
       },
       {
         "n": 3,
-        "q": "Accuracy — Attachment section",
+        "q": "How well did the Attachment section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -413,7 +413,7 @@ const FORMS = {
       },
       {
         "n": 4,
-        "q": "Accuracy — Communication section",
+        "q": "How well did the Communication section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -425,7 +425,7 @@ const FORMS = {
       },
       {
         "n": 5,
-        "q": "Accuracy — Attraction / polarity section",
+        "q": "How well did the Attraction section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -437,7 +437,7 @@ const FORMS = {
       },
       {
         "n": 6,
-        "q": "Accuracy — Intimacy section",
+        "q": "How well did the Intimacy section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -449,7 +449,7 @@ const FORMS = {
       },
       {
         "n": 7,
-        "q": "Accuracy — Values section",
+        "q": "How well did the Values section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -461,7 +461,7 @@ const FORMS = {
       },
       {
         "n": 8,
-        "q": "Accuracy — Drive / goals section",
+        "q": "How well did the Drive section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -473,7 +473,7 @@ const FORMS = {
       },
       {
         "n": 9,
-        "q": "Accuracy — Lifestyle section",
+        "q": "How well did the Lifestyle section fit you two?",
         "t": "single",
         "o": [
           "Spot on",
@@ -485,7 +485,7 @@ const FORMS = {
       },
       {
         "n": 10,
-        "q": "The compatibility score was…",
+        "q": "The compatibility score felt…",
         "t": "single",
         "o": [
           "Higher than expected",
@@ -505,7 +505,7 @@ const FORMS = {
       },
       {
         "n": 12,
-        "q": "Report length / readability",
+        "q": "How was the length and readability?",
         "t": "single",
         "o": [
           "Too little",
