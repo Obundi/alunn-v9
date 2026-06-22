@@ -388,3 +388,173 @@ document.addEventListener('DOMContentLoaded', () => {
   const pin = document.getElementById('pin-input');
   if (pin) pin.addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
 });
+
+/* ── Tab 4: Insights (feedback analysis) ────────────────────────────────────
+   Reads the three feedback tabs (getfeedback), joins each row to the person's
+   questionnaire (by email) for demographics, and aggregates by question using
+   the FORMS definitions in feedback.js. Filter + split-compare, no spreadsheet.
+   ─────────────────────────────────────────────────────────────────────────── */
+let ALL_FEEDBACK = null;
+const FB_TYPES = [
+  { id: 'assessment', label: 'Assessment', arr: 'fb_assessment' },
+  { id: 'profile',    label: 'Profile',    arr: 'fb_profile' },
+  { id: 'match',      label: 'Match',      arr: 'fb_match' }
+];
+let INS = { type: 'assessment', gender: '', ageband: '', city: '', days: 0, compare: 'none' };
+
+async function loadInsights() {
+  const spin = document.getElementById('insights-spinner');
+  const res = document.getElementById('insights-result');
+  spin.style.display = 'inline-block';
+  try {
+    if (typeof FORMS === 'undefined') throw new Error('feedback.js not loaded (FORMS missing).');
+    await loadAllPeople();                       // for the demographic join
+    if (!ALL_FEEDBACK) {
+      const url = `${APPS_SCRIPT_URL}?action=getfeedback&token=${encodeURIComponent(ADMIN_TOKEN_SESSION)}`;
+      const r = await fetch(url); const d = await r.json();
+      if (d && d.ok === false) throw new Error(d.error === 'unauthorized' ? 'Backend rejected the code — did you redeploy Apps Script after adding getfeedback?' : ('Backend error: ' + d.error));
+      ALL_FEEDBACK = d;
+    }
+    renderInsightsControls();
+    applyInsights();
+  } catch (e) {
+    res.innerHTML = `<div class="error-msg visible">${escA(e.message || 'Could not load feedback.')}</div>`;
+  } finally { spin.style.display = 'none'; }
+}
+
+function insDemoMap() {
+  const m = {};
+  (ALL_PEOPLE || []).forEach(p => {
+    const e = (p.email || '').trim().toLowerCase();
+    if (e) m[e] = { gender: (p.filters.Gender || '').trim(), age: Number(p.filters.Age) || null, city: (p.filters.City || '').trim() };
+  });
+  return m;
+}
+function insAgeBand(a) { if (a == null || isNaN(a)) return 'Unknown'; if (a <= 25) return '18–25'; if (a <= 32) return '26–32'; if (a <= 40) return '33–40'; return '41+'; }
+function insCol(postType, q) { return q.field || (postType + '_q' + q.n); }
+function insMean(nums) { return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null; }
+
+// Rows for the selected type, each annotated with its person's demographics.
+function insRows() {
+  const t = FB_TYPES.find(x => x.id === INS.type);
+  const rows = (ALL_FEEDBACK && ALL_FEEDBACK[t.arr]) ? ALL_FEEDBACK[t.arr] : [];
+  const demo = insDemoMap();
+  return rows.map(r => {
+    const d = demo[(r.email || '').trim().toLowerCase()] || {};
+    return Object.assign({}, r, { _gender: d.gender || 'Unknown', _ageband: insAgeBand(d.age), _city: d.city || 'Unknown' });
+  });
+}
+
+function renderInsightsControls() {
+  const genders = [...new Set((ALL_PEOPLE || []).map(p => (p.filters.Gender || '').trim()).filter(Boolean))].sort();
+  const cities = [...new Set((ALL_PEOPLE || []).map(p => (p.filters.City || '').trim()).filter(Boolean))].sort();
+  const opt = (v, cur) => `<option value="${escA(v)}" ${cur === v ? 'selected' : ''}>${escA(v)}</option>`;
+  const res = document.getElementById('insights-result');
+  res.innerHTML = `
+    <div class="top-filters" style="margin-top:14px;">
+      <div class="field"><label>Feedback</label><select id="ins-type">${FB_TYPES.map(t => `<option value="${t.id}" ${INS.type === t.id ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div>
+      <div class="field"><label>Gender</label><select id="ins-gender"><option value="">Any</option>${genders.map(g => opt(g, INS.gender)).join('')}</select></div>
+      <div class="field"><label>Age</label><select id="ins-age"><option value="">Any</option>${['18–25','26–32','33–40','41+'].map(a => opt(a, INS.ageband)).join('')}</select></div>
+      <div class="field"><label>City</label><select id="ins-city"><option value="">Any</option>${cities.map(c => opt(c, INS.city)).join('')}</select></div>
+      <div class="field"><label>When</label><select id="ins-when"><option value="0">Any time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></div>
+      <div class="field"><label>Compare by</label><select id="ins-compare">
+        <option value="none">— none —</option><option value="_gender">Gender</option><option value="_ageband">Age band</option><option value="_city">City</option>
+      </select></div>
+    </div>
+    <div id="ins-output"></div>`;
+  const bind = (id, key, num) => document.getElementById(id).addEventListener('change', e => { INS[key] = num ? Number(e.target.value) : e.target.value; applyInsights(); });
+  bind('ins-type', 'type'); bind('ins-gender', 'gender'); bind('ins-age', 'ageband'); bind('ins-city', 'city'); bind('ins-when', 'days', true); bind('ins-compare', 'compare');
+}
+
+function insFilter(rows) {
+  const cutoff = INS.days ? Date.now() - INS.days * 86400000 : 0;
+  return rows.filter(r => {
+    if (INS.gender && r._gender !== INS.gender) return false;
+    if (INS.ageband && r._ageband !== INS.ageband) return false;
+    if (INS.city && r._city !== INS.city) return false;
+    if (cutoff) { const ts = r.timestamp ? new Date(r.timestamp).getTime() : NaN; if (isNaN(ts) || ts < cutoff) return false; }
+    return true;
+  });
+}
+
+// Aggregate one question over a set of rows.
+function insAgg(rows, postType, q) {
+  const col = insCol(postType, q);
+  const vals = rows.map(r => r[col]).filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+  if (q.t === 'scale') {
+    const nums = vals.map(Number).filter(n => !isNaN(n));
+    const dist = [0, 0, 0, 0, 0]; nums.forEach(n => { if (n >= 1 && n <= 5) dist[n - 1]++; });
+    return { kind: 'scale', n: nums.length, avg: insMean(nums), dist };
+  }
+  if (q.t === 'open' || q.t === 'text') return { kind: 'text', n: vals.length, items: vals.map(String) };
+  const counts = {};
+  vals.forEach(v => String(v).split('|').forEach(o => { o = o.trim(); if (o) counts[o] = (counts[o] || 0) + 1; }));
+  return { kind: 'choice', n: vals.length, counts, options: q.o && q.o.length ? q.o : Object.keys(counts) };
+}
+
+function insBar(pct, color) { return `<div style="background:#eee;border-radius:6px;height:8px;overflow:hidden;flex:1;"><div style="width:${pct}%;height:100%;background:${color || 'var(--terracotta)'};"></div></div>`; }
+
+function applyInsights() {
+  const out = document.getElementById('ins-output');
+  const form = FORMS[INS.type]; const postType = form.postType;
+  const all = insFilter(insRows());
+  const questions = form.questions.filter(q => q.t !== 'email' && q.t !== 'name');
+
+  // groups (compare)
+  let groups;
+  if (INS.compare === 'none') groups = [{ key: 'All', rows: all }];
+  else {
+    const by = {}; all.forEach(r => { const k = r[INS.compare] || 'Unknown'; (by[k] = by[k] || []).push(r); });
+    groups = Object.keys(by).sort().map(k => ({ key: k, rows: by[k] }));
+  }
+
+  // overview
+  let html = `<div class="result-header">${escA(FB_TYPES.find(t => t.id === INS.type).label)} feedback — ${all.length} response${all.length === 1 ? '' : 's'}`;
+  if (INS.type === 'assessment' && (ALL_PEOPLE || []).length) html += ` <span class="org">(~${Math.round(all.length / ALL_PEOPLE.length * 100)}% of ${ALL_PEOPLE.length} who finished the assessment)</span>`;
+  html += `</div>`;
+  if (INS.compare !== 'none') html += `<div class="top-count">Comparing: ${groups.map(g => `${escA(g.key)} (${g.rows.length})`).join('  ·  ')}</div>`;
+  if (!all.length) { out.innerHTML = html + '<div class="top-count">No responses match these filters.</div>'; return; }
+
+  // needs attention (lowest-rated scale questions, overall filtered set)
+  const scaleStats = questions.filter(q => q.t === 'scale').map(q => ({ q, a: insAgg(all, postType, q) })).filter(x => x.a.n > 0).sort((a, b) => a.a.avg - b.a.avg).slice(0, 3);
+  if (scaleStats.length) {
+    html += `<div class="top-gatefilters" style="display:block;"><span class="tf-reasons-label">Lowest-rated</span><div style="margin-top:6px;">` +
+      scaleStats.map(x => `<div style="font-size:0.85rem;color:var(--dark);margin:2px 0;">${escA(x.q.q)} — <strong style="color:var(--terracotta);">${x.a.avg.toFixed(1)}/5</strong> <span class="org">(n=${x.a.n})</span></div>`).join('') +
+      `</div></div>`;
+  }
+
+  // per question
+  html += questions.map(q => {
+    let body = '';
+    if (INS.compare === 'none') {
+      const a = insAgg(all, postType, q);
+      if (!a.n) return `<div class="report-section"><div class="report-section-label">${escA(q.q)}</div><p class="top-count">No answers.</p></div>`;
+      if (a.kind === 'scale') {
+        body = `<div style="font-size:0.9rem;margin-bottom:6px;">Average <strong style="color:var(--terracotta);">${a.avg.toFixed(1)}/5</strong> <span class="org">(n=${a.n})</span></div>` +
+          a.dist.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:0.8rem;"><span style="width:14px;">${i + 1}</span>${insBar(a.n ? c / a.n * 100 : 0)}<span style="width:34px;text-align:right;">${c}</span></div>`).join('');
+      } else if (a.kind === 'choice') {
+        body = a.options.map(o => { const c = a.counts[o] || 0; const pct = a.n ? Math.round(c / a.n * 100) : 0; return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:0.82rem;"><span style="flex:0 0 42%;">${escA(o)}</span>${insBar(pct)}<span style="width:54px;text-align:right;">${pct}% (${c})</span></div>`; }).join('');
+      } else {
+        body = `<details><summary style="cursor:pointer;font-size:0.85rem;color:var(--forest);">${a.n} comment${a.n === 1 ? '' : 's'} — click to read</summary><div style="margin-top:8px;">` +
+          a.items.map(t => `<p style="font-size:0.85rem;border-left:2px solid var(--terracotta);padding:2px 0 2px 10px;margin:6px 0;color:var(--dark);">${escA(t)}</p>`).join('') + `</div></details>`;
+      }
+    } else {
+      // compare: compact table, columns = groups
+      const aggs = groups.map(g => ({ key: g.key, a: insAgg(g.rows, postType, q) }));
+      const head = `<tr><th style="text-align:left;font-weight:600;"></th>${aggs.map(x => `<th style="padding:2px 6px;font-size:0.78rem;color:var(--forest);">${escA(x.key)}<br><span class="org">n=${x.a.n}</span></th>`).join('')}</tr>`;
+      let bodyRows = '';
+      if (q.t === 'scale') {
+        bodyRows = `<tr><td style="font-size:0.82rem;">Average /5</td>${aggs.map(x => `<td style="text-align:center;font-weight:700;color:var(--terracotta);">${x.a.avg != null ? x.a.avg.toFixed(1) : '–'}</td>`).join('')}</tr>`;
+      } else if (q.t === 'open' || q.t === 'text') {
+        bodyRows = `<tr><td style="font-size:0.82rem;">Comments</td>${aggs.map(x => `<td style="text-align:center;">${x.a.n}</td>`).join('')}</tr>`;
+      } else {
+        const opts = (q.o && q.o.length) ? q.o : [...new Set(aggs.flatMap(x => Object.keys(x.a.counts)))];
+        bodyRows = opts.map(o => `<tr><td style="font-size:0.8rem;">${escA(o)}</td>${aggs.map(x => { const c = x.a.counts[o] || 0; const pct = x.a.n ? Math.round(c / x.a.n * 100) : 0; return `<td style="text-align:center;font-size:0.8rem;">${pct}%</td>`; }).join('')}</tr>`).join('');
+      }
+      body = `<table style="width:100%;border-collapse:collapse;">${head}${bodyRows}</table>`;
+    }
+    return `<div class="report-section"><div class="report-section-label">${escA(q.q)}</div>${body}</div>`;
+  }).join('');
+
+  out.innerHTML = `<div class="report-card" style="margin-top:14px;">${html}</div>`;
+}

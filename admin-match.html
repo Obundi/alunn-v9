@@ -91,6 +91,7 @@
       <div class="admin-tab active" onclick="switchTab('tab-top')">Top Matches</div>
       <div class="admin-tab" onclick="switchTab('tab-match')">Match Report</div>
       <div class="admin-tab" onclick="switchTab('tab-profile')">Profile Report</div>
+      <div class="admin-tab" onclick="switchTab('tab-insights')">Insights</div>
     </div>
 
     <div id="tab-top" class="tab-panel active">
@@ -118,6 +119,12 @@
       <button class="btn" id="btn-profile" onclick="generateProfileReport()">Generate profile report <span class="spinner" id="profile-spinner" style="display:none;"></span></button>
       <div id="profile-result"></div>
     </div>
+
+    <div id="tab-insights" class="tab-panel">
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Analyse all feedback — assessment, profile and match — without opening the sheet. Load it, then filter by type and demographics, and compare groups (e.g. what men vs women say).</div></div>
+      <button class="btn" id="btn-insights" onclick="loadInsights()">Load feedback <span class="spinner" id="insights-spinner" style="display:none;"></span></button>
+      <div id="insights-result"></div>
+    </div>
   </div>
 </div>
 
@@ -126,6 +133,7 @@
 <script src="text-library.js"></script>
 <script src="scorer.js"></script>
 <script src="admin-match.js"></script>
+<script src="feedback.js"></script>
 <script src="admin-ui.js"></script>
 </body>
 </html>

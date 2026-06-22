@@ -66,11 +66,18 @@ function notify(type, body) {
 function doGet(e) {
   var action = (e.parameter.action || '').toLowerCase();
   var token = e.parameter.token || '';
-  if (action === 'getall' || action === 'lookup') {
+  if (action === 'getall' || action === 'lookup' || action === 'getfeedback') {
     if (token !== ADMIN_TOKEN) return json({ ok: false, error: 'unauthorized' });
   }
   if (action === 'getall') {
     return json({ people: readAll(SHEETS.questionnaire) });
+  }
+  if (action === 'getfeedback') {
+    return json({
+      fb_assessment: readAll(SHEETS.fb_assessment),
+      fb_profile:    readAll(SHEETS.fb_profile),
+      fb_match:      readAll(SHEETS.fb_match)
+    });
   }
   if (action === 'lookup') {
     var all = readAll(SHEETS.questionnaire);
