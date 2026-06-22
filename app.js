@@ -384,14 +384,31 @@ async function ensureSubmitted() {
 function renderProfile(report) {
   const el = document.getElementById('report-content');
   el.style.display = 'block';
-  // Identical profile body for everyone (shared with the admin tool), plus the
-  // assessment-only nudge to the accuracy feedback form.
+  // Identical profile body for everyone (shared with the admin tool), then the SAME
+  // profile feedback form embedded inline (same questions/logic as fb-profile.html).
+  // The .fb-embed wrapper is hidden in print, so a saved PDF contains ONLY the profile.
   el.innerHTML = profileReportHTML(report) + `
-    <div class="feedback-nudge">
-      <p>One last thing — does this profile actually feel like you? Tell us where it's right and where it's off:</p>
-      <a class="btn" href="fb-profile.html?email=${encodeURIComponent(state.email)}">Rate my profile's accuracy →</a>
+    <div class="fb-embed">
+      <div class="section-divider">Before you go</div>
+      <div class="dim-callout"><span class="dim-callout-icon">i</span><div>Does this profile actually feel like you? Your honest reactions — where it's spot on and where it's off — are the most valuable thing you can give this beta. 🙏</div></div>
+      <div id="profile-fb-mount"></div>
     </div>`;
   animateProfileBars(el);
+
+  // Embed the existing profile feedback form inline (additive — the standalone
+  // fb-profile.html page, the email link and the QR all still work unchanged).
+  const mount = document.getElementById('profile-fb-mount');
+  if (mount && typeof fbRenderInto === 'function') {
+    fbRenderInto('profile', mount, {
+      embedded: true,
+      presetEmail: state.email,           // hidden field → auto-links to their profile, no re-typing
+      submitLabel: 'Send feedback',
+      onSubmitted: () => {
+        mount.innerHTML = '<div class="dim-callout"><span class="dim-callout-icon">✓</span><div><strong>Thank you 🙌</strong> — this really helps shape Alunn. You can still save your profile as a PDF above.</div></div>';
+        mount.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
