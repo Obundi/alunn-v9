@@ -663,23 +663,19 @@ async function fbSubmit(form, mountEl, opts){
 
   btn.disabled=true; btn.innerHTML='<span class="btn-spinner"></span> Sending…';
   payload.submissionId = 'fb_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  fbQueueAdd(payload);                          // persist on-device BEFORE sending — survives a network drop
   const ok = await fbPostConfirmed(payload);
+  if(ok) fbQueueRemove(payload.submissionId);   // confirmed → clear from the queue
+  // If it didn't confirm, it stays queued and auto-retries on the next visit
+  // (idempotent via submissionId), so feedback is never lost to a network hiccup.
 
-  // Embedded in the assessment flow: never block the profile reveal on a
-  // feedback hiccup (we already retried). Proceed regardless.
+  // Embedded in the assessment flow: never block the profile reveal (it's queued either way).
   if(typeof opts.onSubmitted === 'function'){ opts.onSubmitted(); return; }
 
-  if(!ok){
-    btn.disabled=false; btn.innerHTML = opts.submitLabel || 'Submit feedback';
-    err.textContent='Couldn’t reach the server — please check your connection and tap Submit again.';
-    err.classList.add('visible');
-    err.scrollIntoView({behavior:'smooth',block:'center'});
-    return;
-  }
   mountEl.innerHTML=`<div class="screen active"><div class="card" style="text-align:center;">
     <div class="logo-wrap logo-small"><img src="logo.png" alt="Alunn"></div>
     <div class="thankyou-icon">✓</div><h2>Thank you</h2>
-    <p class="screen-intro-text">Your feedback is in — this genuinely shapes how Alunn develops.</p></div></div>`;
+    <p class="screen-intro-text">Your feedback is saved — this genuinely shapes how Alunn develops.</p></div></div>`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -697,8 +693,31 @@ async function fbPostConfirmed(payload){
   return false;
 }
 
+/* ── Durable feedback queue ──────────────────────────────────────────────────
+   Mirrors the questionnaire's reliability: each feedback payload is stored in
+   localStorage BEFORE sending and only removed once the server confirms it.
+   Anything left over (a failed/offline submit) is retried on the next visit.
+   Idempotent via submissionId, so retries never create duplicate rows. ───────*/
+const FB_PENDING_KEY = 'alunn_v9_fb_pending';
+function fbQueueGet(){ try { return JSON.parse(localStorage.getItem(FB_PENDING_KEY)) || []; } catch(e){ return []; } }
+function fbQueueSet(arr){ try { localStorage.setItem(FB_PENDING_KEY, JSON.stringify(arr)); } catch(e){} }
+function fbQueueAdd(p){ const a = fbQueueGet(); a.push(p); fbQueueSet(a); }
+function fbQueueRemove(id){ fbQueueSet(fbQueueGet().filter(p => p.submissionId !== id)); }
+async function fbFlushPending(){
+  const a = fbQueueGet();
+  if(!a.length) return;
+  for(const p of a){
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(p) });
+      const d = await res.json();
+      if(d && d.ok) fbQueueRemove(p.submissionId);   // confirmed (idempotent) → drop it
+    } catch(e){ /* still offline — leave it queued for next time */ }
+  }
+}
+
 // Standalone page mode: fb-*.html sets window.FORM_ID and has a #fb-app container.
 document.addEventListener('DOMContentLoaded', function(){
+  fbFlushPending();   // retry any feedback queued on a previous visit with no/poor connection
   if(window.FORM_ID && document.getElementById('fb-app')){
     fbRenderInto(window.FORM_ID, document.getElementById('fb-app'), {});
   }
