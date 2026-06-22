@@ -401,6 +401,9 @@ const FB_TYPES = [
   { id: 'match',      label: 'Match',      arr: 'fb_match' }
 ];
 let INS = { type: 'assessment', gender: '', ageband: '', city: '', days: 0, compare: 'none' };
+// All feedback scale questions are agree/disagree statements → label 1–5 with words.
+const AGREE5 = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'];
+const agreeWord = avg => (avg == null ? '' : (AGREE5[Math.max(0, Math.min(4, Math.round(avg) - 1))] || ''));
 
 async function loadInsights() {
   const spin = document.getElementById('insights-spinner');
@@ -508,10 +511,19 @@ function applyInsights() {
     groups = Object.keys(by).sort().map(k => ({ key: k, rows: by[k] }));
   }
 
-  // overview
-  let html = `<div class="result-header">${escA(FB_TYPES.find(t => t.id === INS.type).label)} feedback — ${all.length} response${all.length === 1 ? '' : 's'}`;
-  if (INS.type === 'assessment' && (ALL_PEOPLE || []).length) html += ` <span class="org">(~${Math.round(all.length / ALL_PEOPLE.length * 100)}% of ${ALL_PEOPLE.length} who finished the assessment)</span>`;
-  html += `</div>`;
+  // overview — count unique respondents; rate = finishers who gave feedback (≤100%)
+  const uniq = [...new Set(all.map(r => (r.email || '').trim().toLowerCase()).filter(Boolean))];
+  const finishers = (ALL_PEOPLE || []).length;
+  const demoM = insDemoMap();
+  const matched = uniq.filter(e => demoM[e]).length;
+  const noFilters = !INS.gender && !INS.ageband && !INS.city && !INS.days;
+  let head = `${all.length} response${all.length === 1 ? '' : 's'}`;
+  if (uniq.length && uniq.length !== all.length) head += ` from ${uniq.length} ${uniq.length === 1 ? 'person' : 'people'}`;
+  if ((INS.type === 'assessment' || INS.type === 'profile') && finishers && noFilters) {
+    head += ` · ${Math.round(matched / finishers * 100)}% of ${finishers} finishers gave feedback`;
+    if (uniq.length > matched) head += ` <span class="org">(+${uniq.length - matched} from email(s) not in the assessment list)</span>`;
+  }
+  let html = `<div class="result-header">${escA(FB_TYPES.find(t => t.id === INS.type).label)} feedback — ${head}</div>`;
   if (INS.compare !== 'none') html += `<div class="top-count">Comparing: ${groups.map(g => `${escA(g.key)} (${g.rows.length})`).join('  ·  ')}</div>`;
   if (!all.length) { out.innerHTML = html + '<div class="top-count">No responses match these filters.</div>'; return; }
 
@@ -519,7 +531,7 @@ function applyInsights() {
   const scaleStats = questions.filter(q => q.t === 'scale').map(q => ({ q, a: insAgg(all, postType, q) })).filter(x => x.a.n > 0).sort((a, b) => a.a.avg - b.a.avg).slice(0, 3);
   if (scaleStats.length) {
     html += `<div class="top-gatefilters" style="display:block;"><span class="tf-reasons-label">Lowest-rated</span><div style="margin-top:6px;">` +
-      scaleStats.map(x => `<div style="font-size:0.85rem;color:var(--dark);margin:2px 0;">${escA(x.q.q)} — <strong style="color:var(--terracotta);">${x.a.avg.toFixed(1)}/5</strong> <span class="org">(n=${x.a.n})</span></div>`).join('') +
+      scaleStats.map(x => `<div style="font-size:0.85rem;color:var(--dark);margin:2px 0;">${escA(x.q.q)} — <strong style="color:var(--terracotta);">${x.a.avg.toFixed(1)}/5</strong> (${agreeWord(x.a.avg)}) <span class="org">(n=${x.a.n})</span></div>`).join('') +
       `</div></div>`;
   }
 
@@ -530,8 +542,8 @@ function applyInsights() {
       const a = insAgg(all, postType, q);
       if (!a.n) return `<div class="report-section"><div class="report-section-label">${escA(q.q)}</div><p class="top-count">No answers.</p></div>`;
       if (a.kind === 'scale') {
-        body = `<div style="font-size:0.9rem;margin-bottom:6px;">Average <strong style="color:var(--terracotta);">${a.avg.toFixed(1)}/5</strong> <span class="org">(n=${a.n})</span></div>` +
-          a.dist.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:0.8rem;"><span style="width:14px;">${i + 1}</span>${insBar(a.n ? c / a.n * 100 : 0)}<span style="width:34px;text-align:right;">${c}</span></div>`).join('');
+        body = `<div style="font-size:0.9rem;margin-bottom:6px;">Average <strong style="color:var(--terracotta);">${a.avg.toFixed(1)}/5</strong> — ${agreeWord(a.avg)} <span class="org">(n=${a.n})</span></div>` +
+          a.dist.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:0.8rem;"><span style="flex:0 0 44%;">${i + 1} · ${AGREE5[i]}</span>${insBar(a.n ? c / a.n * 100 : 0)}<span style="width:60px;text-align:right;">${c} (${a.n ? Math.round(c / a.n * 100) : 0}%)</span></div>`).join('');
       } else if (a.kind === 'choice') {
         body = a.options.map(o => { const c = a.counts[o] || 0; const pct = a.n ? Math.round(c / a.n * 100) : 0; return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:0.82rem;"><span style="flex:0 0 42%;">${escA(o)}</span>${insBar(pct)}<span style="width:54px;text-align:right;">${pct}% (${c})</span></div>`; }).join('');
       } else {
@@ -544,7 +556,7 @@ function applyInsights() {
       const head = `<tr><th style="text-align:left;font-weight:600;"></th>${aggs.map(x => `<th style="padding:2px 6px;font-size:0.78rem;color:var(--forest);">${escA(x.key)}<br><span class="org">n=${x.a.n}</span></th>`).join('')}</tr>`;
       let bodyRows = '';
       if (q.t === 'scale') {
-        bodyRows = `<tr><td style="font-size:0.82rem;">Average /5</td>${aggs.map(x => `<td style="text-align:center;font-weight:700;color:var(--terracotta);">${x.a.avg != null ? x.a.avg.toFixed(1) : '–'}</td>`).join('')}</tr>`;
+        bodyRows = `<tr><td style="font-size:0.82rem;">Average /5</td>${aggs.map(x => `<td style="text-align:center;font-weight:700;color:var(--terracotta);">${x.a.avg != null ? x.a.avg.toFixed(1) + '<br><span class="org" style="font-weight:400;">' + agreeWord(x.a.avg) + '</span>' : '–'}</td>`).join('')}</tr>`;
       } else if (q.t === 'open' || q.t === 'text') {
         bodyRows = `<tr><td style="font-size:0.82rem;">Comments</td>${aggs.map(x => `<td style="text-align:center;">${x.a.n}</td>`).join('')}</tr>`;
       } else {
