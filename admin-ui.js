@@ -51,6 +51,16 @@ function switchTab(id) {
 
 function escA(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+// Normalise free-typed city names so variants merge (case, spacing, common aliases).
+const CITY_ALIASES = { 'cdmx': 'Mexico City', 'mexico city': 'Mexico City', 'méxico city': 'Mexico City', 'ciudad de mexico': 'Mexico City', 'ciudad de méxico': 'Mexico City', 'nyc': 'New York', 'new york city': 'New York', 'amsterdam nl': 'Amsterdam' };
+function normCity(s) {
+  const k = (s == null ? '' : String(s)).trim().replace(/\s+/g, ' ');
+  if (!k) return '';
+  const low = k.toLowerCase();
+  if (CITY_ALIASES[low]) return CITY_ALIASES[low];
+  return k.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+
 // Anonymous, deterministic couple code from the two emails (order-independent).
 // Same couple → same code; reveals nothing about who they are.
 function pairToken(a, b) {
@@ -132,7 +142,7 @@ const GATE_LABELS = { gender: 'Gender / orientation', kids: 'Children', reltype:
 
 function renderTopBar() {
   const el = document.getElementById('top-result');
-  const cities = [...new Set(TOP.rows.map(r => (r.person.filters.City || '').trim()).filter(Boolean))].sort();
+  const cities = [...new Set(TOP.rows.map(r => normCity(r.person.filters.City)).filter(Boolean))].sort();
   const cityOpts = ['<option value="">Any city</option>'].concat(cities.map(c => `<option>${escA(c)}</option>`)).join('');
   // Gate reasons actually present among the candidates (so we only show relevant toggles).
   const presentCodes = [...new Set(TOP.rows.map(r => r.result.blockedCode).filter(Boolean))];
@@ -203,7 +213,7 @@ function applyTopFilters() {
       if (res.hidden && !showLow) return false;
     }
     if (minScore && (res.overall === null || res.overall < minScore)) return false;
-    if (city && (p.filters.City || '').trim() !== city) return false;
+    if (city && normCity(p.filters.City) !== city) return false;
     if (cutoff) { const ts = tsOf(p); if (ts === null || ts < cutoff) return false; }
     if (q && (((p.name || '') + ' ' + (p.email || '')).toLowerCase().indexOf(q) === -1)) return false;
     return true;
@@ -402,7 +412,7 @@ function dashHTML() {
   const wk = Date.now() - 7 * 86400000;
   const last7 = ppl.filter(p => { const t = tsOf(p); return t && t >= wk; }).length;
   const g = {}; ppl.forEach(p => { const k = (p.filters.Gender || '—').toString().trim() || '—'; g[k] = (g[k] || 0) + 1; });
-  const c = {}; ppl.forEach(p => { const k = (p.filters.City || '').toString().trim(); if (k) c[k] = (c[k] || 0) + 1; });
+  const c = {}; ppl.forEach(p => { const k = normCity(p.filters.City); if (k) c[k] = (c[k] || 0) + 1; });
   const cTop = {}; Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 5).forEach(k => cTop[k] = c[k]);
   let fb;
   if (ALL_FEEDBACK) {
@@ -498,7 +508,7 @@ function insDemoMap() {
   const m = {};
   (ALL_PEOPLE || []).forEach(p => {
     const e = (p.email || '').trim().toLowerCase();
-    if (e) m[e] = { gender: (p.filters.Gender || '').trim(), age: Number(p.filters.Age) || null, city: (p.filters.City || '').trim() };
+    if (e) m[e] = { gender: (p.filters.Gender || '').trim(), age: Number(p.filters.Age) || null, city: normCity(p.filters.City) };
   });
   return m;
 }
@@ -519,7 +529,7 @@ function insRows() {
 
 function renderInsightsControls() {
   const genders = [...new Set((ALL_PEOPLE || []).map(p => (p.filters.Gender || '').trim()).filter(Boolean))].sort();
-  const cities = [...new Set((ALL_PEOPLE || []).map(p => (p.filters.City || '').trim()).filter(Boolean))].sort();
+  const cities = [...new Set((ALL_PEOPLE || []).map(p => normCity(p.filters.City)).filter(Boolean))].sort();
   const opt = (v, cur) => `<option value="${escA(v)}" ${cur === v ? 'selected' : ''}>${escA(v)}</option>`;
   const res = document.getElementById('insights-result');
   res.innerHTML = `
